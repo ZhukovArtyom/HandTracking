@@ -17,7 +17,7 @@ from mediapipe.tasks.python import vision
 CAMERA_WIDTH = 320
 CAMERA_HEIGHT = 240
 MODEL_PATH = 'hand_landmarker.task'
-SENSITIVITY_ZONE_PERCENT = 50
+SENSITIVITY_ZONE_PERCENT = 80
 CLICK_DISTANCE_THRESHOLD = 0.04
 CLICK_COOLDOWN = 0.5
 TRANSPARENT_COLOR = (1, 1, 1)
@@ -102,15 +102,27 @@ class AdvancedCursorController:
         while self.running:
             landmarks, cursor_pos = None, None
             with self.data_lock:
-                if 'landmarks' in self.hand_data: landmarks = self.hand_data['landmarks']
+                if 'landmarks' in self.hand_data:
+                    landmarks = self.hand_data['landmarks']
                 cursor_pos = self.smoothed_cursor_pos
 
             if landmarks and cursor_pos:
-                thumb_tip = landmarks[4];
+                thumb_tip = landmarks[4]
                 index_tip = landmarks[8]
                 distance = np.sqrt((thumb_tip.x - index_tip.x) ** 2 + (thumb_tip.y - index_tip.y) ** 2)
+
                 if distance < CLICK_DISTANCE_THRESHOLD and (time.time() - self.last_click_time) > CLICK_COOLDOWN:
-                    pyautogui.click(x=cursor_pos[0], y=cursor_pos[1])
+                    # Сохраняем текущую позицию мыши
+                    original_pos = win32api.GetCursorPos()
+
+                    # Эмулируем клик в позиции курсора-кружка без перемещения системного курсора
+                    win32api.SetCursorPos((int(cursor_pos[0]), int(cursor_pos[1])))
+                    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
+                    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+
+                    # Возвращаем курсор в исходную позицию
+                    win32api.SetCursorPos(original_pos)
+
                     print(f"Клик! В точке: {cursor_pos}")
                     self.last_click_time = time.time()
             time.sleep(0.01)
