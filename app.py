@@ -4,6 +4,8 @@ import time
 import numpy as np
 import threading
 import pyautogui
+import psutil
+import os
 
 # --- Импорты для прозрачного окна (Windows) ---
 import win32gui
@@ -24,6 +26,9 @@ DOUBLE_CLICK_INTERVAL = 1.0  # Интервал для двойного клик
 HOLD_THRESHOLD = 0.15  # Время удержания для активации режима перетаскивания (в секундах)
 TRANSPARENT_COLOR = (1, 1, 1)
 
+# --- НАСТРОЙКИ ПРОИЗВОДИТЕЛЬНОСТИ ---
+PROCESS_PRIORITY_HIGH = True  # Высокий приоритет процесса
+
 
 class AdvancedCursorController:
     def __init__(self):
@@ -40,6 +45,15 @@ class AdvancedCursorController:
         self.is_dragging = False
         self.drag_start_time = None
         self.drag_activated = False
+
+        # Устанавливаем высокий приоритет процесса
+        if PROCESS_PRIORITY_HIGH:
+            try:
+                p = psutil.Process(os.getpid())
+                p.nice(psutil.HIGH_PRIORITY_CLASS)
+                print(f"Приоритет процесса установлен: HIGH")
+            except Exception as e:
+                print(f"Не удалось установить приоритет процесса: {e}")
 
         print("Инициализация модели MediaPipe...")
         try:
@@ -65,6 +79,7 @@ class AdvancedCursorController:
         self.frame_count = 0
 
     def capture_thread(self):
+        """Поток захвата видео"""
         print("Запуск потока захвата...")
         while self.running:
             success, frame = self.cap.read()
@@ -74,6 +89,7 @@ class AdvancedCursorController:
             time.sleep(0.001)
 
     def tracking_thread(self):
+        """Поток отслеживания руки"""
         print("Запуск потока отслеживания...")
         zone_factor = SENSITIVITY_ZONE_PERCENT / 100.0
         x_margin = (1.0 - zone_factor) / 2.0
@@ -155,9 +171,10 @@ class AdvancedCursorController:
         print(f"Завершение перетаскивания в точке: ({x}, {y})")
 
     def click_thread(self):
+        """Поток обработки кликов"""
         print("Запуск потока обработки кликов...")
         print(
-            "Режимы: указательный+большой - левый клик, средний+большой - правый клик, удержание указательного+большого - drag & drop")
+            "Режимы: указательный+большой - левый клик, безымянный+большой - правый клик, удержание указательного+большого - drag & drop")
 
         # Для отслеживания предыдущего состояния щипков
         prev_left_pinch = False
@@ -174,11 +191,11 @@ class AdvancedCursorController:
                 # Получаем координаты кончиков пальцев
                 thumb_tip = landmarks[4]  # Большой палец
                 index_tip = landmarks[8]  # Указательный палец
-                middle_tip = landmarks[16]  # безымянный палец
+                ring_tip = landmarks[16]  # Безымянный палец
 
                 # Расстояния для щипков
                 left_pinch_distance = np.sqrt((thumb_tip.x - index_tip.x) ** 2 + (thumb_tip.y - index_tip.y) ** 2)
-                right_pinch_distance = np.sqrt((thumb_tip.x - middle_tip.x) ** 2 + (thumb_tip.y - middle_tip.y) ** 2)
+                right_pinch_distance = np.sqrt((thumb_tip.x - ring_tip.x) ** 2 + (thumb_tip.y - ring_tip.y) ** 2)
 
                 current_time = time.time()
 
@@ -206,7 +223,7 @@ class AdvancedCursorController:
                     if self.is_dragging:
                         win32api.SetCursorPos((int(cursor_pos[0]), int(cursor_pos[1])))
 
-                # --- Правый щипок (средний + большой) ---
+                # --- Правый щипок (безымянный + большой) ---
                 right_pinch = right_pinch_distance < CLICK_DISTANCE_THRESHOLD
 
                 # Обработка правого клика (только если не в режиме перетаскивания)
@@ -251,6 +268,7 @@ class AdvancedCursorController:
             time.sleep(0.01)
 
     def display_thread(self):
+        """Поток отображения"""
         print("Запуск основного потока отображения...")
         camera_window_name = "Camera Feed"
         cursor_window_name = "Transparent Cursor Overlay"
@@ -305,7 +323,7 @@ class AdvancedCursorController:
 
                 # Добавляем подсказки по управлению
                 cv2.putText(frame, "Left: Index+Thumb", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-                cv2.putText(frame, "Right: Middle+Thumb", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+                cv2.putText(frame, "Right: Ring+Thumb", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
                 cv2.imshow(camera_window_name, frame)
 
@@ -347,7 +365,7 @@ class AdvancedCursorController:
         print("Запуск программы...")
         print("Управление:")
         print("  - Указательный + большой пальцы: левый клик (короткое смыкание) или drag & drop (удержание)")
-        print("  - Средний + большой пальцы: правый клик")
+        print("  - Безымянный + большой пальцы: правый клик")
         print(f"  - Время удержания для drag & drop: {HOLD_THRESHOLD}с")
         print("  - Нажмите 'q' для выхода")
 
