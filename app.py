@@ -17,10 +17,10 @@ from mediapipe.tasks.python import vision
 CAMERA_WIDTH = 320
 CAMERA_HEIGHT = 240
 MODEL_PATH = 'hand_landmarker.task'
-SENSITIVITY_ZONE_PERCENT = 65
+SENSITIVITY_ZONE_PERCENT = 50
 CLICK_DISTANCE_THRESHOLD = 0.04
 CLICK_COOLDOWN = 0.5
-DOUBLE_CLICK_INTERVAL = 1.0  # Интервал для двойного клика
+DOUBLE_CLICK_INTERVAL = 1.0  # Интервал для двойного клика (не используется, оставлен для совместимости)
 HOLD_THRESHOLD = 0.15  # Время удержания для активации режима перетаскивания (в секундах)
 TRANSPARENT_COLOR = (1, 1, 1)
 
@@ -33,16 +33,13 @@ class AdvancedCursorController:
         self.hand_data = {}
         self.smoothed_cursor_pos = None
         self.prev_cursor_x, self.prev_cursor_y = 0, 0
-        self.last_click_time = 0
-        self.last_click_pos = None  # Для отслеживания позиции последнего клика
-        self.click_count = 0  # Счетчик кликов для двойного клика
-        self.last_click_reset_time = 0  # Время сброса счетчика кликов
+        self.last_left_click_time = 0
+        self.last_right_click_time = 0
 
-        # Новые переменные для удержания
+        # Переменные для удержания (drag & drop)
         self.is_dragging = False
         self.drag_start_time = None
-        self.drag_start_pos = None
-        self.drag_activated = False  # Флаг, что режим перетаскивания активирован
+        self.drag_activated = False
 
         print("Инициализация модели MediaPipe...")
         try:
@@ -110,31 +107,35 @@ class AdvancedCursorController:
             else:
                 time.sleep(0.01)
 
-    def perform_click(self, x, y, double_click=False):
-        """Выполняет клик без перемещения системного курсора"""
+    def perform_left_click(self, x, y):
+        """Выполняет левый клик без перемещения системного курсора"""
         original_pos = win32api.GetCursorPos()
 
         # Устанавливаем курсор в позицию клика
         win32api.SetCursorPos((int(x), int(y)))
 
-        if double_click:
-            # Двойной клик
-            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
-            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
-            time.sleep(0.05)  # Небольшая задержка между кликами
-            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
-            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
-            print(f"Двойной клик! В точке: ({x}, {y})")
-        else:
-            # Одиночный клик
-            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
-            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
-            print(f"Клик! В точке: ({x}, {y})")
+        # Левый клик
+        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
+        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+        print(f"Левый клик! В точке: ({x}, {y})")
 
         # Возвращаем курсор в исходную позицию
         win32api.SetCursorPos(original_pos)
 
-        return (x, y)  # Возвращаем позицию клика
+    def perform_right_click(self, x, y):
+        """Выполняет правый клик без перемещения системного курсора"""
+        original_pos = win32api.GetCursorPos()
+
+        # Устанавливаем курсор в позицию клика
+        win32api.SetCursorPos((int(x), int(y)))
+
+        # Правый клик
+        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0)
+        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0)
+        print(f"Правый клик! В точке: ({x}, {y})")
+
+        # Возвращаем курсор в исходную позицию
+        win32api.SetCursorPos(original_pos)
 
     def start_drag(self, x, y):
         """Начинает перетаскивание"""
@@ -156,7 +157,11 @@ class AdvancedCursorController:
     def click_thread(self):
         print("Запуск потока обработки кликов...")
         print(
-            "Режимы: быстрый щипок - одиночный клик, двойной быстрый щипок - двойной клик, удержание щипка - drag & drop")
+            "Режимы: указательный+большой - левый клик, средний+большой - правый клик, удержание указательного+большого - drag & drop")
+
+        # Для отслеживания предыдущего состояния щипков
+        prev_left_pinch = False
+        prev_right_pinch = False
 
         while self.running:
             landmarks, cursor_pos = None, None
@@ -166,22 +171,25 @@ class AdvancedCursorController:
                 cursor_pos = self.smoothed_cursor_pos
 
             if landmarks and cursor_pos:
-                thumb_tip = landmarks[4]
-                index_tip = landmarks[8]
-                distance = np.sqrt((thumb_tip.x - index_tip.x) ** 2 + (thumb_tip.y - index_tip.y) ** 2)
+                # Получаем координаты кончиков пальцев
+                thumb_tip = landmarks[4]  # Большой палец
+                index_tip = landmarks[8]  # Указательный палец
+                middle_tip = landmarks[16]  # безымянный палец
+
+                # Расстояния для щипков
+                left_pinch_distance = np.sqrt((thumb_tip.x - index_tip.x) ** 2 + (thumb_tip.y - index_tip.y) ** 2)
+                right_pinch_distance = np.sqrt((thumb_tip.x - middle_tip.x) ** 2 + (thumb_tip.y - middle_tip.y) ** 2)
 
                 current_time = time.time()
 
-                # Сброс счетчика двойных кликов если прошло слишком много времени
-                if current_time - self.last_click_reset_time > DOUBLE_CLICK_INTERVAL:
-                    self.click_count = 0
+                # --- Левый щипок (указательный + большой) ---
+                left_pinch = left_pinch_distance < CLICK_DISTANCE_THRESHOLD
 
-                # Обработка щипка (пальцы сомкнуты)
-                if distance < CLICK_DISTANCE_THRESHOLD:
+                # Обработка левого щипка для drag & drop и кликов
+                if left_pinch:
                     # Если не в режиме перетаскивания и щипок только начался
                     if not self.is_dragging and self.drag_start_time is None:
                         self.drag_start_time = current_time
-                        self.drag_start_pos = cursor_pos
                         self.drag_activated = False
 
                     # Проверка на удержание для активации drag & drop
@@ -194,48 +202,49 @@ class AdvancedCursorController:
                             self.original_mouse_pos = self.start_drag(cursor_pos[0], cursor_pos[1])
                             print("Режим перетаскивания активирован")
 
-                    # Если в режиме перетаскивания, обновляем позицию (перемещаем с нажатой кнопкой)
+                    # Если в режиме перетаскивания, обновляем позицию
                     if self.is_dragging:
-                        # Перемещаем курсор с нажатой кнопкой
                         win32api.SetCursorPos((int(cursor_pos[0]), int(cursor_pos[1])))
 
-                # Пальцы разомкнуты
-                else:
+                # --- Правый щипок (средний + большой) ---
+                right_pinch = right_pinch_distance < CLICK_DISTANCE_THRESHOLD
+
+                # Обработка правого клика (только если не в режиме перетаскивания)
+                if right_pinch and not prev_right_pinch and not self.is_dragging:
+                    if (current_time - self.last_right_click_time) > CLICK_COOLDOWN:
+                        self.perform_right_click(cursor_pos[0], cursor_pos[1])
+                        self.last_right_click_time = current_time
+
+                # --- Обработка завершения действий ---
+
+                # Если левый щипок закончился
+                if prev_left_pinch and not left_pinch:
                     # Если был активирован режим перетаскивания, завершаем его
                     if self.is_dragging:
                         self.end_drag(cursor_pos[0], cursor_pos[1], self.original_mouse_pos)
                         self.is_dragging = False
                         self.drag_start_time = None
                         self.drag_activated = False
-                        self.click_count = 0  # Сбрасываем счетчик кликов
 
-                    # Если было удержание, но недостаточное для drag & drop, и пальцы разомкнуты
+                    # Если было удержание, но недостаточное для drag & drop (короткий клик)
                     elif self.drag_start_time is not None and not self.drag_activated:
                         hold_duration = current_time - self.drag_start_time
 
-                        # Проверяем на двойной клик (быстрое двойное смыкание)
-                        if hold_duration < HOLD_THRESHOLD and (current_time - self.last_click_time) > CLICK_COOLDOWN:
-                            # Проверяем, был ли предыдущий клик в том же месте
-                            if (self.click_count == 1 and self.last_click_pos and
-                                    abs(cursor_pos[0] - self.last_click_pos[0]) < 50 and
-                                    abs(cursor_pos[1] - self.last_click_pos[1]) < 50):
-                                # Двойной клик
-                                self.perform_click(cursor_pos[0], cursor_pos[1], double_click=True)
-                                self.click_count = 0
-                                self.last_click_time = current_time
-                            else:
-                                # Одиночный клик
-                                self.last_click_pos = self.perform_click(cursor_pos[0], cursor_pos[1],
-                                                                         double_click=False)
-                                self.click_count = 1
-                                self.last_click_time = current_time
-
-                            self.last_click_reset_time = current_time
+                        # Если удержание было коротким - это левый клик
+                        if hold_duration < HOLD_THRESHOLD and (
+                                current_time - self.last_left_click_time) > CLICK_COOLDOWN:
+                            self.perform_left_click(cursor_pos[0], cursor_pos[1])
+                            self.last_left_click_time = current_time
 
                         self.drag_start_time = None
                         self.drag_activated = False
 
-                    # Сбрасываем таймер удержания
+                # Обновляем предыдущие состояния
+                prev_left_pinch = left_pinch
+                prev_right_pinch = right_pinch
+
+                # Сбрасываем таймер удержания, если нет щипка
+                if not left_pinch:
                     self.drag_start_time = None
                     self.drag_activated = False
 
@@ -284,18 +293,20 @@ class AdvancedCursorController:
                 mode_text = "Mode: "
                 if self.is_dragging:
                     mode_text += "DRAGGING"
-                    color = (0, 0, 255)  # Красный
                 elif self.drag_start_time is not None:
                     # Показываем прогресс удержания
                     hold_progress = min(1.0, (time.time() - self.drag_start_time) / HOLD_THRESHOLD)
                     mode_text += f"HOLDING {int(hold_progress * 100)}%"
-                    color = (0, 255, 255)  # Желтый
                 else:
                     mode_text += "READY"
-                    color = (0, 255, 0)  # Зеленый
 
-                cv2.putText(frame, mode_text, (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+                cv2.putText(frame, mode_text, (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
                 cv2.putText(frame, f"FPS: {self.fps}", (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+
+                # Добавляем подсказки по управлению
+                cv2.putText(frame, "Left: Index+Thumb", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+                cv2.putText(frame, "Right: Middle+Thumb", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+
                 cv2.imshow(camera_window_name, frame)
 
             overlay_image = np.full((self.screen_height, self.screen_width, 3), TRANSPARENT_COLOR, dtype=np.uint8)
@@ -303,19 +314,9 @@ class AdvancedCursorController:
                 cursor_pos_to_draw = self.smoothed_cursor_pos
 
             if cursor_pos_to_draw:
-                # Рисуем курсор с индикацией режима
-                if self.is_dragging:
-                    # Красный круг для режима перетаскивания
-                    cv2.circle(overlay_image, cursor_pos_to_draw, 15, (0, 0, 255), cv2.FILLED)
-                    cv2.circle(overlay_image, cursor_pos_to_draw, 15, (255, 255, 255), 2)
-                elif self.drag_start_time is not None:
-                    # Желтый круг для режима удержания
-                    cv2.circle(overlay_image, cursor_pos_to_draw, 12, (0, 255, 255), cv2.FILLED)
-                    cv2.circle(overlay_image, cursor_pos_to_draw, 12, (255, 255, 255), 1)
-                else:
-                    # Белый круг для обычного режима
-                    cv2.circle(overlay_image, cursor_pos_to_draw, 10, (255, 255, 255), cv2.FILLED)
-                    cv2.circle(overlay_image, cursor_pos_to_draw, 10, (0, 0, 0), 1)
+                # Всегда рисуем белый круг одинакового размера
+                cv2.circle(overlay_image, cursor_pos_to_draw, 10, (255, 255, 255), cv2.FILLED)
+                cv2.circle(overlay_image, cursor_pos_to_draw, 10, (0, 0, 0), 1)
 
             cv2.imshow(cursor_window_name, overlay_image)
 
@@ -345,9 +346,9 @@ class AdvancedCursorController:
         if not self.running: return
         print("Запуск программы...")
         print("Управление:")
-        print("  - Быстрый щипок: одиночный клик")
-        print("  - Два быстрых щипка: двойной клик")
-        print(f"  - Удержание щипка > {HOLD_THRESHOLD}с: режим перетаскивания")
+        print("  - Указательный + большой пальцы: левый клик (короткое смыкание) или drag & drop (удержание)")
+        print("  - Средний + большой пальцы: правый клик")
+        print(f"  - Время удержания для drag & drop: {HOLD_THRESHOLD}с")
         print("  - Нажмите 'q' для выхода")
 
         try:
