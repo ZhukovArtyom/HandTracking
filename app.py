@@ -16,8 +16,8 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
 # --- ОСНОВНЫЕ НАСТРОЙКИ ---
-CAMERA_WIDTH = 320
-CAMERA_HEIGHT = 240
+CAMERA_WIDTH = 240
+CAMERA_HEIGHT = 180
 MODEL_PATH = 'hand_landmarker.task'
 SENSITIVITY_ZONE_PERCENT = 50
 CLICK_DISTANCE_THRESHOLD = 0.04
@@ -45,6 +45,8 @@ class AdvancedCursorController:
         self.is_dragging = False
         self.drag_start_time = None
         self.drag_activated = False
+
+
 
         # Устанавливаем высокий приоритет процесса
         if PROCESS_PRIORITY_HIGH:
@@ -100,6 +102,7 @@ class AdvancedCursorController:
             with self.frame_lock:
                 if self.current_frame is not None:
                     frame_to_process = self.current_frame.copy()
+                    actual_height, actual_width = frame_to_process.shape[:2]
 
             if frame_to_process is not None:
                 image_rgb = cv2.cvtColor(frame_to_process, cv2.COLOR_BGR2RGB)
@@ -116,7 +119,10 @@ class AdvancedCursorController:
                     screen_x = np.interp(center_x_rel, (x_margin, 1.0 - x_margin), (0, self.screen_width))
                     screen_y = np.interp(center_y_rel, (y_margin, 1.0 - y_margin), (0, self.screen_height))
                     target_pos = (screen_x, screen_y)
-                    hand_center = (int(center_x_rel * CAMERA_WIDTH), int(center_y_rel * CAMERA_HEIGHT))
+                    hand_center = (
+                        int(center_x_rel * actual_width),
+                        int(center_y_rel * actual_height)
+                    )
 
                 with self.data_lock:
                     self.hand_data = {'landmarks': hand_landmarks, 'center': hand_center, 'target_pos': target_pos}
@@ -171,14 +177,16 @@ class AdvancedCursorController:
         print(f"Завершение перетаскивания в точке: ({x}, {y})")
 
     def click_thread(self):
-        """Поток обработки кликов"""
         print("Запуск потока обработки кликов...")
         print(
             "Режимы: указательный+большой - левый клик, безымянный+большой - правый клик, удержание указательного+большого - drag & drop")
 
-        # Для отслеживания предыдущего состояния щипков
         prev_left_pinch = False
         prev_right_pinch = False
+
+        # Новые переменные для буфера перетаскивания
+        self.drag_loss_time = None  # Время потери трекинга во время перетаскивания
+        DRAG_LOSS_TIMEOUT = 0.1  # 0.1 секунды буфера (можно настроить)
 
         while self.running:
             landmarks, cursor_pos = None, None
@@ -188,94 +196,94 @@ class AdvancedCursorController:
                 cursor_pos = self.smoothed_cursor_pos
 
             if landmarks and cursor_pos:
-                # Получаем координаты кончиков пальцев
-                thumb_tip = landmarks[4]  # Большой палец
-                index_tip = landmarks[8]  # Указательный палец
-                ring_tip = landmarks[16]  # Безымянный палец
+                thumb_tip = landmarks[4]
+                index_tip = landmarks[8]
+                ring_tip = landmarks[16]
 
-                # Расстояния для щипков
                 left_pinch_distance = np.sqrt((thumb_tip.x - index_tip.x) ** 2 + (thumb_tip.y - index_tip.y) ** 2)
                 right_pinch_distance = np.sqrt((thumb_tip.x - ring_tip.x) ** 2 + (thumb_tip.y - ring_tip.y) ** 2)
 
                 current_time = time.time()
 
-                # --- Левый щипок (указательный + большой) ---
+                # --- Левый щипок ---
                 left_pinch = left_pinch_distance < CLICK_DISTANCE_THRESHOLD
 
-                # Обработка левого щипка для drag & drop и кликов
                 if left_pinch:
-                    # Если не в режиме перетаскивания и щипок только начался
+                    # Если мы в режиме перетаскивания, сбрасываем таймер потери
+                    if self.is_dragging:
+                        self.drag_loss_time = None
+
+                    # Логика активации перетаскивания
                     if not self.is_dragging and self.drag_start_time is None:
                         self.drag_start_time = current_time
                         self.drag_activated = False
-
-                    # Проверка на удержание для активации drag & drop
                     elif self.drag_start_time is not None and not self.drag_activated:
                         hold_duration = current_time - self.drag_start_time
                         if hold_duration >= HOLD_THRESHOLD:
-                            # Активируем режим перетаскивания
                             self.is_dragging = True
                             self.drag_activated = True
                             self.original_mouse_pos = self.start_drag(cursor_pos[0], cursor_pos[1])
                             print("Режим перетаскивания активирован")
 
-                    # Если в режиме перетаскивания, обновляем позицию
                     if self.is_dragging:
                         win32api.SetCursorPos((int(cursor_pos[0]), int(cursor_pos[1])))
 
-                # --- Правый щипок (безымянный + большой) ---
+                # --- Если щипка нет, но мы в режиме перетаскивания ---
+                elif self.is_dragging:
+                    if self.drag_loss_time is None:
+                        # Запоминаем время потери трекинга
+                        self.drag_loss_time = current_time
+                    elif current_time - self.drag_loss_time > DRAG_LOSS_TIMEOUT:
+                        # Если потеря превысила таймаут, завершаем перетаскивание
+                        self.end_drag(cursor_pos[0], cursor_pos[1], self.original_mouse_pos)
+                        self.is_dragging = False
+                        self.drag_start_time = None
+                        self.drag_activated = False
+                        self.drag_loss_time = None
+                        print("Перетаскивание завершено по таймауту")
+
+                # --- Правый щипок ---
                 right_pinch = right_pinch_distance < CLICK_DISTANCE_THRESHOLD
 
-                # Обработка правого клика (только если не в режиме перетаскивания)
                 if right_pinch and not prev_right_pinch and not self.is_dragging:
                     if (current_time - self.last_right_click_time) > CLICK_COOLDOWN:
                         self.perform_right_click(cursor_pos[0], cursor_pos[1])
                         self.last_right_click_time = current_time
 
-                # --- Обработка завершения действий ---
-
-                # Если левый щипок закончился
-                if prev_left_pinch and not left_pinch:
-                    # Если был активирован режим перетаскивания, завершаем его
-                    if self.is_dragging:
-                        self.end_drag(cursor_pos[0], cursor_pos[1], self.original_mouse_pos)
-                        self.is_dragging = False
-                        self.drag_start_time = None
-                        self.drag_activated = False
-
-                    # Если было удержание, но недостаточное для drag & drop (короткий клик)
-                    elif self.drag_start_time is not None and not self.drag_activated:
+                # --- Обработка завершения обычного (не буферного) режима ---
+                if prev_left_pinch and not left_pinch and not self.is_dragging:
+                    if self.drag_start_time is not None and not self.drag_activated:
                         hold_duration = current_time - self.drag_start_time
-
-                        # Если удержание было коротким - это левый клик
                         if hold_duration < HOLD_THRESHOLD and (
                                 current_time - self.last_left_click_time) > CLICK_COOLDOWN:
                             self.perform_left_click(cursor_pos[0], cursor_pos[1])
                             self.last_left_click_time = current_time
-
                         self.drag_start_time = None
                         self.drag_activated = False
 
-                # Обновляем предыдущие состояния
+                # Обновляем состояния
                 prev_left_pinch = left_pinch
                 prev_right_pinch = right_pinch
 
-                # Сбрасываем таймер удержания, если нет щипка
-                if not left_pinch:
+                # Сбрасываем таймер удержания если нет щипка и не в режиме перетаскивания
+                if not left_pinch and not self.is_dragging:
                     self.drag_start_time = None
                     self.drag_activated = False
 
             time.sleep(0.01)
 
     def display_thread(self):
-        """Поток отображения"""
         print("Запуск основного потока отображения...")
         camera_window_name = "Camera Feed"
         cursor_window_name = "Transparent Cursor Overlay"
+
         cv2.namedWindow(camera_window_name, cv2.WINDOW_AUTOSIZE)
         cv2.namedWindow(cursor_window_name, cv2.WINDOW_NORMAL)
         cv2.setWindowProperty(cursor_window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+
         is_transparent_set = False
+        hwnd = None
+        last_force_top = time.time()
 
         while self.running:
             with self.frame_lock:
@@ -307,12 +315,10 @@ class AdvancedCursorController:
                 if hand_center:
                     cv2.circle(frame, hand_center, 7, (0, 255, 0), cv2.FILLED)
 
-                # Отображение текущего режима
                 mode_text = "Mode: "
                 if self.is_dragging:
                     mode_text += "DRAGGING"
                 elif self.drag_start_time is not None:
-                    # Показываем прогресс удержания
                     hold_progress = min(1.0, (time.time() - self.drag_start_time) / HOLD_THRESHOLD)
                     mode_text += f"HOLDING {int(hold_progress * 100)}%"
                 else:
@@ -320,8 +326,6 @@ class AdvancedCursorController:
 
                 cv2.putText(frame, mode_text, (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
                 cv2.putText(frame, f"FPS: {self.fps}", (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-
-                # Добавляем подсказки по управлению
                 cv2.putText(frame, "Left: Index+Thumb", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
                 cv2.putText(frame, "Right: Ring+Thumb", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
@@ -332,27 +336,62 @@ class AdvancedCursorController:
                 cursor_pos_to_draw = self.smoothed_cursor_pos
 
             if cursor_pos_to_draw:
-                # Всегда рисуем белый круг одинакового размера
+                # Рисуем курсор
                 cv2.circle(overlay_image, cursor_pos_to_draw, 10, (255, 255, 255), cv2.FILLED)
                 cv2.circle(overlay_image, cursor_pos_to_draw, 10, (0, 0, 0), 1)
 
             cv2.imshow(cursor_window_name, overlay_image)
 
+            # === УЛУЧШЕННОЕ УПРАВЛЕНИЕ ОКНОМ ===
+            current_time = time.time()
+
             if not is_transparent_set:
                 try:
                     hwnd = win32gui.FindWindow(None, cursor_window_name)
-                    current_style = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
-                    new_style = current_style | win32con.WS_EX_LAYERED | win32con.WS_EX_TRANSPARENT
-                    win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE, new_style)
-                    win32gui.SetLayeredWindowAttributes(hwnd, win32api.RGB(*TRANSPARENT_COLOR), 0,
-                                                        win32con.LWA_COLORKEY)
-                    win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
-                                          win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
-                    is_transparent_set = True
-                    print("Прозрачность и 'прокликиваемость' для оверлея успешно установлены.")
+                    if hwnd:
+                        # Устанавливаем расширенные стили
+                        current_style = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
+
+                        # Добавляем WS_EX_TOOLWINDOW (окно не отображается в панели задач)
+                        # и WS_EX_LAYERED для прозрачности
+                        new_style = current_style | win32con.WS_EX_LAYERED | win32con.WS_EX_TRANSPARENT | win32con.WS_EX_TOOLWINDOW
+                        win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE, new_style)
+
+                        # Устанавливаем прозрачность
+                        win32gui.SetLayeredWindowAttributes(hwnd, win32api.RGB(*TRANSPARENT_COLOR), 0,
+                                                            win32con.LWA_COLORKEY)
+
+                        # Делаем окно самым верхним (HWND_TOPMOST)
+                        win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                                              win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW)
+
+                        # Дополнительно устанавливаем флаг WS_EX_NOACTIVATE чтобы не воровать фокус
+                        style_no_activate = win32gui.GetWindowLong(hwnd,
+                                                                   win32con.GWL_EXSTYLE) | win32con.WS_EX_NOACTIVATE
+                        win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE, style_no_activate)
+
+                        is_transparent_set = True
+                        print("Окно оверлея настроено для отображения поверх всех окон")
                 except Exception as e:
-                    print(f"Не удалось установить прозрачность: {e}")
+                    print(f"Ошибка настройки окна: {e}")
                     is_transparent_set = True
+
+            # === ПРИНУДИТЕЛЬНОЕ ПОДНЯТИЕ ОКНА (каждые 0.1 секунды) ===
+            if hwnd and current_time - last_force_top > 0.1:
+                try:
+                    # Принудительно поднимаем окно поверх всех
+                    win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                                          win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_NOACTIVATE)
+
+                    # Дополнительно для гарантии
+                    win32gui.BringWindowToTop(hwnd)
+                except:
+                    hwnd = None  # Если окно потеряно, найдём его заново
+                last_force_top = current_time
+
+            # Если hwnd потерян, пытаемся найти его снова
+            if hwnd is None:
+                hwnd = win32gui.FindWindow(None, cursor_window_name)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 self.running = False
