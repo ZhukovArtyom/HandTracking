@@ -27,7 +27,7 @@ HOLD_THRESHOLD = 0.15  # Время удержания для активации
 DRAG_LOSS_TIMEOUT = 0.1  # 0.1 секунды буфера (можно настроить)
 
 # --- НАСТРОЙКИ СГЛАЖИВАНИЯ КУРСОРА ---
-SMOOTHING_LEVEL = 0.4  # Уровень сглаживания (0.0 - без сглаживания, 1.0 - максимальное сглаживание)
+SMOOTHING_LEVEL = 0.7  # Уровень сглаживания (0.0 - без сглаживания, 1.0 - максимальное сглаживание)
 
 # --- НАСТРОЙКИ ПРОИЗВОДИТЕЛЬНОСТИ ---
 PROCESS_PRIORITY_HIGH = True  # Высокий приоритет процесса
@@ -120,16 +120,15 @@ class AdvancedCursorController:
 
                 if detection_result.hand_landmarks:
                     hand_landmarks = detection_result.hand_landmarks[0]
-                    x_coords = [lm.x for lm in hand_landmarks]
-                    y_coords = [lm.y for lm in hand_landmarks]
-                    center_x_rel = np.mean(x_coords)
-                    center_y_rel = np.mean(y_coords)
-                    screen_x = np.interp(center_x_rel, (x_margin, 1.0 - x_margin), (0, self.screen_width))
-                    screen_y = np.interp(center_y_rel, (y_margin, 1.0 - y_margin), (0, self.screen_height))
+                    # Используем точку 0 (запястье) вместо среднего арифметического
+                    wrist_x_rel = hand_landmarks[0].x
+                    wrist_y_rel = hand_landmarks[0].y
+                    screen_x = np.interp(wrist_x_rel, (x_margin, 1.0 - x_margin), (0, self.screen_width))
+                    screen_y = np.interp(wrist_y_rel, (y_margin, 1.0 - y_margin), (0, self.screen_height))
                     target_pos = (screen_x, screen_y)
                     hand_center = (
-                        int(center_x_rel * actual_width),
-                        int(center_y_rel * actual_height)
+                        int(wrist_x_rel * actual_width),
+                        int(wrist_y_rel * actual_height)
                     )
 
                 with self.data_lock:
