@@ -18,8 +18,8 @@ from mediapipe.tasks.python import vision
 CAMERA_WIDTH = 320
 CAMERA_HEIGHT = 240
 MODEL_PATH = 'hand_landmarker.task'
-SENSITIVITY_ZONE_PERCENT = 60
-CLICK_DISTANCE_THRESHOLD = 0.06
+SENSITIVITY_ZONE_PERCENT = 50
+CLICK_DISTANCE_THRESHOLD = 0.05
 CLICK_COOLDOWN = 0.5
 #DOUBLE_CLICK_INTERVAL = 1.0   #Интервал для двойного клика (не используется, оставлен для совместимости)
 HOLD_THRESHOLD = 0.15  # Время удержания для активации режима перетаскивания (в секундах)
@@ -121,8 +121,8 @@ class AdvancedCursorController:
                 if detection_result.hand_landmarks:
                     hand_landmarks = detection_result.hand_landmarks[0]
                     # Используем точку 0 (запястье) вместо среднего арифметического
-                    wrist_x_rel = hand_landmarks[0].x
-                    wrist_y_rel = hand_landmarks[0].y
+                    wrist_x_rel = hand_landmarks[17].x
+                    wrist_y_rel = hand_landmarks[17].y
                     screen_x = np.interp(wrist_x_rel, (x_margin, 1.0 - x_margin), (0, self.screen_width))
                     screen_y = np.interp(wrist_y_rel, (y_margin, 1.0 - y_margin), (0, self.screen_height))
                     target_pos = (screen_x, screen_y)
