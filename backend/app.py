@@ -14,20 +14,22 @@ import win32con
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-# --- ОСНОВНЫЕ НАСТРОЙКИ ---
-CAMERA_WIDTH = 320
-CAMERA_HEIGHT = 240
-MODEL_PATH = 'hand_landmarker.task'
-SENSITIVITY_ZONE_PERCENT = 50
-CLICK_DISTANCE_THRESHOLD = 0.05
-CLICK_COOLDOWN = 0.5
-#DOUBLE_CLICK_INTERVAL = 1.0   #Интервал для двойного клика (не используется, оставлен для совместимости)
-HOLD_THRESHOLD = 0.15  # Время удержания для активации режима перетаскивания (в секундах)
+from config_loader import config
 
-DRAG_LOSS_TIMEOUT = 0.1  # 0.1 секунды буфера (можно настроить)
+# --- ОСНОВНЫЕ НАСТРОЙКИ ---
+CAMERA_WIDTH = config.get('camera.width')
+CAMERA_HEIGHT = config.get('camera.height')
+MODEL_PATH = config.get('model.path')
+SENSITIVITY_ZONE_PERCENT = config.get('cursor.sensitivity_zone_percent')
+CLICK_DISTANCE_THRESHOLD = config.get('gestures.click_distance_threshold')
+CLICK_COOLDOWN = config.get('gestures.click_cooldown')
+#DOUBLE_CLICK_INTERVAL = 1.0   #Интервал для двойного клика (не используется, оставлен для совместимости)
+HOLD_THRESHOLD = config.get('gestures.hold_threshold')  # Время удержания для активации режима перетаскивания (в секундах)
+
+DRAG_LOSS_TIMEOUT = config.get('gestures.drag_loss_timeout')  # 0.1 секунды буфера (можно настроить)
 
 # --- НАСТРОЙКИ СГЛАЖИВАНИЯ КУРСОРА ---
-SMOOTHING_LEVEL = 0.7  # Уровень сглаживания (0.0 - без сглаживания, 1.0 - максимальное сглаживание)
+SMOOTHING_LEVEL = config.get('cursor.smoothing_level')  # Уровень сглаживания (0.0 - без сглаживания, 1.0 - максимальное сглаживание)
 
 # --- НАСТРОЙКИ ПРОИЗВОДИТЕЛЬНОСТИ ---
 PROCESS_PRIORITY_HIGH = True  # Высокий приоритет процесса
