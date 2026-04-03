@@ -1,0 +1,32 @@
+{
+  "gestures": [
+    {
+      "id": "left_click",
+      "name": "Левый клик",
+      "points_groups": [[4, 8]],
+      "action": "left_click",
+      "params": {},
+      "cooldown": 0.5,
+      "hold_enabled": true,
+      "hold_threshold": 0.15
+    },
+    {
+      "id": "right_click",
+      "name": "Правый клик",
+      "points_groups": [[4, 16]],
+      "action": "right_click",
+      "params": {},
+      "cooldown": 0.5,
+      "hold_enabled": false
+    },
+    {
+      "id": "drag_drop",
+      "name": "Drag & Drop",
+      "points_groups": [[4, 8]],
+      "action": "drag_drop",
+      "params": {},
+      "hold_enabled": true,
+      "hold_threshold": 0.15
+    }
+  ]
+}
