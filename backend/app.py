@@ -101,7 +101,7 @@ class AdvancedCursorController:
             if success:
                 with self.frame_lock:
                     self.current_frame = cv2.flip(frame, 1)
-            time.sleep(0.001)
+
 
     def tracking_thread(self):
         """Поток отслеживания руки"""
@@ -146,9 +146,7 @@ class AdvancedCursorController:
 
 
             else:
-                time.sleep(0.01)
-
-
+                time.sleep(0.001)
 
 
 

@@ -1,7 +1,6 @@
 import json
 import time
 import threading
-from collections import defaultdict
 import numpy as np
 import win32api
 import win32con
@@ -9,9 +8,8 @@ import win32con
 from config_loader import config
 
 CLICK_DISTANCE_THRESHOLD = config.get('gestures.click_distance_threshold')
-CLICK_COOLDOWN = config.get('gestures.click_cooldown')
 HOLD_THRESHOLD = config.get('gestures.hold_threshold')
-DRAG_LOSS_TIMEOUT = config.get('gestures.drag_loss_timeout')
+
 
 class GestureRecognizer:
     def __init__(self, gestures_file='config/gestures.json'):
@@ -23,7 +21,7 @@ class GestureRecognizer:
         """
         self.gestures_file = gestures_file
         self.gestures = []
-        self.active_gestures = {}  # {gesture_id: {'start_time': timestamp, 'activated': False}}
+        self.active_gestures = {}  # {gesture_id: {'start_time': timestamp, 'hold_activated': False}}
         self.last_execution_time = {}  # {gesture_id: last_execution_timestamp}
         self.lock = threading.Lock()
 
@@ -37,8 +35,7 @@ class GestureRecognizer:
                 data = json.load(f)
                 self.gestures = data.get('gestures', [])
                 print(f"Загружено {len(self.gestures)} жестов:")
-                for gesture in self.gestures:
-                    print(f"  - {gesture['name']} (id: {gesture['id']})")
+
         except FileNotFoundError:
             print(f"Файл {self.gestures_file} не найден!")
             self.gestures = []
@@ -47,11 +44,20 @@ class GestureRecognizer:
             self.gestures = []
 
     def calculate_distance(self, point1, point2):
-
+        """Вычисляет расстояние между двумя точками"""
         return np.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2)
 
     def check_point_group(self, landmarks, point_group):
+        """
+        Проверяет, что все точки в группе находятся близко друг к другу
 
+        Args:
+            landmarks: список точек руки
+            point_group: список индексов точек для проверки
+
+        Returns:
+            bool: True если все точки близко друг к другу
+        """
         if not landmarks or len(point_group) < 2:
             return False
 
@@ -63,8 +69,7 @@ class GestureRecognizer:
             else:
                 return False
 
-        # Проверяем, что все точки находятся близко друг к другу
-        # Для этого проверяем, что максимальное расстояние между любой парой точек меньше порога
+        # Проверяем, что максимальное расстояние между любой парой точек меньше порога
         for i in range(len(points)):
             for j in range(i + 1, len(points)):
                 distance = self.calculate_distance(points[i], points[j])
@@ -96,132 +101,174 @@ class GestureRecognizer:
         return True
 
     def execute_action(self, gesture, current_time, target_pos):
+        """
+        Выполняет действие жеста на on_press и on_release
 
-        action = gesture.get('action')
-        hold_enabled = gesture.get('hold_enabled', False)
-
+        Args:
+            gesture: словарь с описанием жеста
+            current_time: текущее время
+            target_pos: целевая позиция (x, y)
+        """
         gesture_id = gesture['id']
+        hold_enabled = gesture.get('hold_enabled', False)
+        cooldown = gesture.get('cooldown', 0)
 
-        # Проверяем кулдаун
+        # Проверяем кулдаун для on_press
         if gesture_id in self.last_execution_time:
-            if current_time - self.last_execution_time[gesture_id] < CLICK_COOLDOWN:
+            if current_time - self.last_execution_time[gesture_id] < cooldown:
                 return False
 
-        # Обработка удержания для жестов с поддержкой hold
-        if hold_enabled:
-            if gesture_id not in self.active_gestures:
-                # Жест только начался
-                self.active_gestures[gesture_id] = {
-                    'start_time': current_time,
-                    'activated': False
-                }
-                return False
-            else:
-                # Жест уже активен
-                gesture_data = self.active_gestures[gesture_id]
-                hold_duration = current_time - gesture_data['start_time']
+        # Проверяем, активен ли уже жест
+        if gesture_id not in self.active_gestures:
+            # Жест только начался - вызываем on_press
+            self.active_gestures[gesture_id] = {
+                'start_time': current_time,
+                'hold_activated': False
+            }
 
-                if not gesture_data['activated']:
-                    if hold_duration >= HOLD_THRESHOLD:
-                        # Удержание достигло порога - активируем действие
-                        gesture_data['activated'] = True
-                        self._perform_action(action, target_pos, gesture)
-                        self.last_execution_time[gesture_id] = current_time
-                        return True
-                return False
-        else:
-            # Без удержания - выполняем сразу
-            self._perform_action(action, target_pos, gesture)
+            print(f"Жест активирован: {gesture['name']}")
+            self._perform_action(gesture['on_press'], target_pos, gesture)
             self.last_execution_time[gesture_id] = current_time
+
             return True
+        else:
+            # Жест уже активен
+            gesture_data = self.active_gestures[gesture_id]
+
+            # Если включен режим удержания и еще не активирован
+            if hold_enabled and not gesture_data['hold_activated']:
+                hold_duration = current_time - gesture_data['start_time']
+                if hold_duration >= HOLD_THRESHOLD:
+                    # Достигнут порог удержания - вызываем on_press повторно
+                    gesture_data['hold_activated'] = True
+                    if 'on_press' in gesture:
+                        print(f"Жест удержан: {gesture['name']} ({(hold_duration * 1000):.0f}ms)")
+                        self._perform_action(gesture['on_press'], target_pos, gesture)
+                        self.last_execution_time[gesture_id] = current_time
+                    return True
+
+            return False
+
+    def on_gesture_release(self, gesture_id, target_pos):
+        """
+        Вызывается когда жест перестает распознаваться
+
+        Args:
+            gesture_id: идентификатор жеста
+            target_pos: целевая позиция (x, y)
+        """
+        # Находим жест по ID
+        for gesture in self.gestures:
+            if gesture['id'] == gesture_id:
+
+                print(f"Жест деактивирован: {gesture['name']}")
+                self._perform_action(gesture['on_release'], target_pos, gesture)
+                break
 
     def perform_left_click(self, x, y):
-        """Выполняет левый клик"""
-        # Устанавливаем курсор в позицию клика
-        win32api.SetCursorPos((int(x), int(y)))
+
+
 
         # Левый клик
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
+
+        print(f"Левый клик! В точке: ({x:.0f}, {y:.0f})")
+
+    def perform_left_click_release(self, x, y):
+
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
-        print(f"Левый клик! В точке: ({x}, {y})")
+        print(f"Левый клик отпущен! В точке: ({x:.0f}, {y:.0f})")
 
     def perform_right_click(self, x, y):
-        """Выполняет правый клик"""
-        # Устанавливаем курсор в позицию клика
-        win32api.SetCursorPos((int(x), int(y)))
 
         # Правый клик
         win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0)
+
+        print(f"Правый клик! В точке: ({x:.0f}, {y:.0f})")
+
+    def perform_right_click_release(self, x, y):
+
         win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0)
-        print(f"Правый клик! В точке: ({x}, {y})")
-
-    def start_drag(self, x, y):
-        """Начинает перетаскивание"""
-        win32api.SetCursorPos((int(x), int(y)))
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
-        print(f"Начало перетаскивания в точке: ({x}, {y})")
-
-    def end_drag(self, x, y):
-        """Завершает перетаскивание"""
-        win32api.SetCursorPos((int(x), int(y)))
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
-        print(f"Завершение перетаскивания в точке: ({x}, {y})")
+        print(f"правый клик отпущен! В точке: ({x:.0f}, {y:.0f})")
 
     def _perform_action(self, action, target_pos, gesture):
+        """
+        Выполняет действие жеста
 
-        params = gesture.get('params', {})
-
-        if action == 'left_click':
-            print(f"Выполняется левый клик (жест: {gesture['name']})")
+        Args:
+            action: тип действия (str)
+            target_pos: целевая позиция (x, y)
+            gesture: словарь с описанием жеста
+        """
+        if action == 'left_click_press':
             if target_pos:
                 self.perform_left_click(target_pos[0], target_pos[1])
+            else:
+                print(f"Ошибка: нет позиции для левого клика")
 
-        elif action == 'right_click':
-            print(f"Выполняется правый клик (жест: {gesture['name']})")
+        elif action == 'left_click_relese':
+            if target_pos:
+                self.perform_left_click_release(target_pos[0], target_pos[1])
+            else:
+                print(f"Ошибка: нет позиции для правого клика")
+
+        elif action == 'right_click_press':
             if target_pos:
                 self.perform_right_click(target_pos[0], target_pos[1])
+            else:
+                print(f"Ошибка: нет позиции для правого клика")
 
-        elif action == 'drag_drop':
-            print(f"Выполняется drag & drop (жест: {gesture['name']})")
-
+        elif action == 'right_click_release':
+            if target_pos:
+                self.perform_right_click_release(target_pos[0], target_pos[1])
+            else:
+                print(f"Ошибка: нет позиции для правого клика")
 
         else:
             print(f"Неизвестное действие: {action}")
 
-    def reset_hold(self, gesture_id):
+    def recognize_and_execute(self, landmarks, target_pos):
         """
-        Сбрасывает состояние удержания для жеста
+        Распознает жест и выполняет соответствующее действие
 
         Args:
-            gesture_id: идентификатор жеста
+            landmarks: список точек руки
+            target_pos: целевая позиция (x, y)
         """
-        if gesture_id in self.active_gestures:
-            del self.active_gestures[gesture_id]
-
-    def recognize_and_execute(self, landmarks, target_pos):
-
         if not landmarks:
-            # Если нет руки, сбрасываем все активные удержания
+            # Если нет руки, сбрасываем все активные жесты
             with self.lock:
+                # Вызываем on_release для всех активных жестов
+                for gesture_id in list(self.active_gestures.keys()):
+                    self.on_gesture_release(gesture_id, target_pos)
                 self.active_gestures.clear()
             return
 
         current_time = time.time()
 
         with self.lock:
+            active_gesture_ids = set()
+
             # Проверяем все загруженные жесты
             for gesture in self.gestures:
                 if self.check_gesture(landmarks, gesture):
+                    active_gesture_ids.add(gesture['id'])
                     # Жест распознан
                     self.execute_action(gesture, current_time, target_pos)
-                else:
-                    # Жест не выполнен - сбрасываем состояние удержания если оно было
-                    if gesture['id'] in self.active_gestures:
-                        del self.active_gestures[gesture['id']]
+
+            # Проверяем, какие жесты перестали быть активными
+            for gesture_id in list(self.active_gestures.keys()):
+                if gesture_id not in active_gesture_ids:
+                    # Жест больше не распознается - вызываем on_release
+                    self.on_gesture_release(gesture_id, target_pos)
+                    del self.active_gestures[gesture_id]
 
     def reload_gestures(self):
         """Перезагружает жесты из файла"""
         self.load_gestures()
         with self.lock:
+            # Вызываем on_release для всех активных жестов перед очисткой
+            for gesture_id in list(self.active_gestures.keys()):
+                self.on_gesture_release(gesture_id, None)
             self.active_gestures.clear()
             self.last_execution_time.clear()

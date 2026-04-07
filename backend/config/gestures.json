@@ -4,29 +4,31 @@
       "id": "left_click",
       "name": "Левый клик",
       "points_groups": [[4, 8]],
-      "action": "left_click",
-      "params": {},
-      "cooldown": 0.5,
-      "hold_enabled": true,
-      "hold_threshold": 0.15
-    },
-    {
-      "id": "right_click",
-      "name": "Правый клик",
-      "points_groups": [[4, 16]],
-      "action": "right_click",
+      "on_press": "left_click_press",
+      "on_release": "left_click_release",
       "params": {},
       "cooldown": 0.5,
       "hold_enabled": false
     },
     {
-      "id": "drag_drop",
-      "name": "Drag & Drop",
-      "points_groups": [[4, 8]],
-      "action": "drag_drop",
+      "id": "right_click",
+      "name": "Правый клик",
+      "points_groups": [[4, 16]],
+      "on_press": "right_click_press",
+      "on_release": "right_click_release",
       "params": {},
-      "hold_enabled": true,
-      "hold_threshold": 0.15
+      "cooldown": 0.5,
+      "hold_enabled": false
     }
+//    {
+//      "id": "drag_drop",
+//      "name": "Drag & Drop",
+//      "points_groups": [[4, 8]],
+//      "on_press": "drag_drop",
+//      "on_release": "drag_drop",
+//      "params": {},
+//      "hold_enabled": true,
+//      "hold_threshold": 0.15
+//    }
   ]
 }
