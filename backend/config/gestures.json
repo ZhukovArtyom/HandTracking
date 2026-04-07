@@ -20,15 +20,5 @@
       "cooldown": 0.5,
       "hold_enabled": false
     }
-//    {
-//      "id": "drag_drop",
-//      "name": "Drag & Drop",
-//      "points_groups": [[4, 8]],
-//      "on_press": "drag_drop",
-//      "on_release": "drag_drop",
-//      "params": {},
-//      "hold_enabled": true,
-//      "hold_threshold": 0.15
-//    }
   ]
 }

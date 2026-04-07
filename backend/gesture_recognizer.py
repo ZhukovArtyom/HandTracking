@@ -22,6 +22,7 @@ class GestureRecognizer:
         self.gestures_file = gestures_file
         self.gestures = []
         self.active_gestures = {}  # {gesture_id: {'start_time': timestamp, 'hold_activated': False}}
+
         self.last_execution_time = {}  # {gesture_id: last_execution_timestamp}
         self.lock = threading.Lock()
 
@@ -111,12 +112,7 @@ class GestureRecognizer:
         """
         gesture_id = gesture['id']
         hold_enabled = gesture.get('hold_enabled', False)
-        cooldown = gesture.get('cooldown', 0)
 
-        # Проверяем кулдаун для on_press
-        if gesture_id in self.last_execution_time:
-            if current_time - self.last_execution_time[gesture_id] < cooldown:
-                return False
 
         # Проверяем, активен ли уже жест
         if gesture_id not in self.active_gestures:
@@ -206,7 +202,7 @@ class GestureRecognizer:
             else:
                 print(f"Ошибка: нет позиции для левого клика")
 
-        elif action == 'left_click_relese':
+        elif action == 'left_click_release':
             if target_pos:
                 self.perform_left_click_release(target_pos[0], target_pos[1])
             else:
