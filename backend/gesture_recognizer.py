@@ -3,10 +3,18 @@ import time
 import threading
 from collections import defaultdict
 import numpy as np
+import win32api
+import win32con
 
+from config_loader import config
+
+CLICK_DISTANCE_THRESHOLD = config.get('gestures.click_distance_threshold')
+CLICK_COOLDOWN = config.get('gestures.click_cooldown')
+HOLD_THRESHOLD = config.get('gestures.hold_threshold')
+DRAG_LOSS_TIMEOUT = config.get('gestures.drag_loss_timeout')
 
 class GestureRecognizer:
-    def __init__(self, gestures_file='gestures.json'):
+    def __init__(self, gestures_file='config/gestures.json'):
         """
         Инициализация распознавателя жестов
 
@@ -39,30 +47,11 @@ class GestureRecognizer:
             self.gestures = []
 
     def calculate_distance(self, point1, point2):
-        """
-        Вычисляет расстояние между двумя точками
 
-        Args:
-            point1: точка с атрибутами x, y
-            point2: точка с атрибутами x, y
-
-        Returns:
-            float: расстояние между точками
-        """
         return np.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2)
 
-    def check_point_group(self, landmarks, point_group, distance_threshold=0.05):
-        """
-        Проверяет, все ли точки в группе пересекаются (находятся близко друг к другу)
+    def check_point_group(self, landmarks, point_group):
 
-        Args:
-            landmarks: список точек руки от MediaPipe
-            point_group: список индексов точек (например [4, 8] или [4, 3, 2])
-            distance_threshold: порог расстояния для определения пересечения
-
-        Returns:
-            bool: True если все точки близки друг к другу
-        """
         if not landmarks or len(point_group) < 2:
             return False
 
@@ -79,7 +68,7 @@ class GestureRecognizer:
         for i in range(len(points)):
             for j in range(i + 1, len(points)):
                 distance = self.calculate_distance(points[i], points[j])
-                if distance > distance_threshold:
+                if distance > CLICK_DISTANCE_THRESHOLD:
                     return False
 
         return True
@@ -106,26 +95,16 @@ class GestureRecognizer:
 
         return True
 
-    def execute_action(self, gesture, current_time, cursor_controller, target_pos):
-        """
-        Выполняет действие, привязанное к жесту
+    def execute_action(self, gesture, current_time, target_pos):
 
-        Args:
-            gesture: словарь с описанием жеста
-            current_time: текущее время
-            cursor_controller: экземпляр AdvancedCursorController
-            target_pos: целевая позиция курсора (x, y)
-        """
         action = gesture.get('action')
-        cooldown = gesture.get('cooldown', 0)
         hold_enabled = gesture.get('hold_enabled', False)
-        hold_threshold = gesture.get('hold_threshold', 0.3)
 
         gesture_id = gesture['id']
 
         # Проверяем кулдаун
         if gesture_id in self.last_execution_time:
-            if current_time - self.last_execution_time[gesture_id] < cooldown:
+            if current_time - self.last_execution_time[gesture_id] < CLICK_COOLDOWN:
                 return False
 
         # Обработка удержания для жестов с поддержкой hold
@@ -143,64 +122,68 @@ class GestureRecognizer:
                 hold_duration = current_time - gesture_data['start_time']
 
                 if not gesture_data['activated']:
-                    if hold_duration >= hold_threshold:
+                    if hold_duration >= HOLD_THRESHOLD:
                         # Удержание достигло порога - активируем действие
                         gesture_data['activated'] = True
-                        self._perform_action(action, cursor_controller, target_pos, gesture)
+                        self._perform_action(action, target_pos, gesture)
                         self.last_execution_time[gesture_id] = current_time
                         return True
                 return False
         else:
             # Без удержания - выполняем сразу
-            self._perform_action(action, cursor_controller, target_pos, gesture)
+            self._perform_action(action, target_pos, gesture)
             self.last_execution_time[gesture_id] = current_time
             return True
 
-    def _perform_action(self, action, cursor_controller, target_pos, gesture):
-        """
-        Выполняет конкретное действие
+    def perform_left_click(self, x, y):
+        """Выполняет левый клик"""
+        # Устанавливаем курсор в позицию клика
+        win32api.SetCursorPos((int(x), int(y)))
 
-        Args:
-            action: строка с названием действия
-            cursor_controller: экземпляр AdvancedCursorController
-            target_pos: целевая позиция курсора
-            gesture: словарь с описанием жеста (для параметров)
-        """
+        # Левый клик
+        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
+        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+        print(f"Левый клик! В точке: ({x}, {y})")
+
+    def perform_right_click(self, x, y):
+        """Выполняет правый клик"""
+        # Устанавливаем курсор в позицию клика
+        win32api.SetCursorPos((int(x), int(y)))
+
+        # Правый клик
+        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0)
+        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0)
+        print(f"Правый клик! В точке: ({x}, {y})")
+
+    def start_drag(self, x, y):
+        """Начинает перетаскивание"""
+        win32api.SetCursorPos((int(x), int(y)))
+        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
+        print(f"Начало перетаскивания в точке: ({x}, {y})")
+
+    def end_drag(self, x, y):
+        """Завершает перетаскивание"""
+        win32api.SetCursorPos((int(x), int(y)))
+        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+        print(f"Завершение перетаскивания в точке: ({x}, {y})")
+
+    def _perform_action(self, action, target_pos, gesture):
+
         params = gesture.get('params', {})
 
         if action == 'left_click':
             print(f"Выполняется левый клик (жест: {gesture['name']})")
             if target_pos:
-                cursor_controller.perform_left_click(target_pos[0], target_pos[1])
+                self.perform_left_click(target_pos[0], target_pos[1])
 
         elif action == 'right_click':
             print(f"Выполняется правый клик (жест: {gesture['name']})")
             if target_pos:
-                cursor_controller.perform_right_click(target_pos[0], target_pos[1])
+                self.perform_right_click(target_pos[0], target_pos[1])
 
         elif action == 'drag_drop':
             print(f"Выполняется drag & drop (жест: {gesture['name']})")
-            # Здесь можно реализовать логику drag & drop
-            # В текущей реализации она уже есть в основном классе
-            pass
 
-        elif action == 'double_click':
-            print(f"Выполняется двойной клик (жест: {gesture['name']})")
-            if target_pos:
-                cursor_controller.perform_left_click(target_pos[0], target_pos[1])
-                time.sleep(0.1)
-                cursor_controller.perform_left_click(target_pos[0], target_pos[1])
-
-        elif action == 'scroll_up':
-            print(f"Выполняется скролл вверх (жест: {gesture['name']})")
-            # Реализация скролла
-            import win32con
-            win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, 0, 0, 120, 0)
-
-        elif action == 'scroll_down':
-            print(f"Выполняется скролл вниз (жест: {gesture['name']})")
-            import win32con
-            win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, 0, 0, -120, 0)
 
         else:
             print(f"Неизвестное действие: {action}")
@@ -215,15 +198,8 @@ class GestureRecognizer:
         if gesture_id in self.active_gestures:
             del self.active_gestures[gesture_id]
 
-    def recognize_and_execute(self, landmarks, cursor_controller, target_pos):
-        """
-        Основной метод: распознает жест и выполняет действие
+    def recognize_and_execute(self, landmarks, target_pos):
 
-        Args:
-            landmarks: список точек руки
-            cursor_controller: экземпляр AdvancedCursorController
-            target_pos: целевая позиция курсора
-        """
         if not landmarks:
             # Если нет руки, сбрасываем все активные удержания
             with self.lock:
@@ -237,7 +213,7 @@ class GestureRecognizer:
             for gesture in self.gestures:
                 if self.check_gesture(landmarks, gesture):
                     # Жест распознан
-                    self.execute_action(gesture, current_time, cursor_controller, target_pos)
+                    self.execute_action(gesture, current_time, target_pos)
                 else:
                     # Жест не выполнен - сбрасываем состояние удержания если оно было
                     if gesture['id'] in self.active_gestures:

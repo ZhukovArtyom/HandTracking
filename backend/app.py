@@ -15,6 +15,7 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
 from config_loader import config
+from gesture_recognizer import GestureRecognizer
 
 # --- ОСНОВНЫЕ НАСТРОЙКИ ---
 CAMERA_WIDTH = config.get('camera.width')
@@ -90,6 +91,8 @@ class AdvancedCursorController:
         self.last_fps_time = time.time()
         self.frame_count = 0
 
+        self.gesture_recognizer = GestureRecognizer()
+
     def capture_thread(self):
         """Поток захвата видео"""
         print("Запуск потока захвата...")
@@ -133,46 +136,21 @@ class AdvancedCursorController:
                         int(wrist_y_rel * actual_height)
                     )
 
+                    # ПЕРЕМЕЩАЕМ КУРСОР
+
+                    smoothed_pos = self.apply_smoothing(target_pos[0], target_pos[1])
+                    win32api.SetCursorPos((int(smoothed_pos[0]), int(smoothed_pos[1])))
+
                 with self.data_lock:
                     self.hand_data = {'landmarks': hand_landmarks, 'center': hand_center, 'target_pos': target_pos}
+
+
             else:
                 time.sleep(0.01)
 
-    def perform_left_click(self, x, y):
-        """Выполняет левый клик"""
-        # Устанавливаем курсор в позицию клика
-        win32api.SetCursorPos((int(x), int(y)))
 
-        # Левый клик
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
-        print(f"Левый клик! В точке: ({x}, {y})")
 
-    def perform_right_click(self, x, y):
-        """Выполняет правый клик"""
-        # Устанавливаем курсор в позицию клика
-        win32api.SetCursorPos((int(x), int(y)))
 
-        # Правый клик
-        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0)
-        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0)
-        print(f"Правый клик! В точке: ({x}, {y})")
-
-    def start_drag(self, x, y):
-        """Начинает перетаскивание"""
-        win32api.SetCursorPos((int(x), int(y)))
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
-        print(f"Начало перетаскивания в точке: ({x}, {y})")
-
-    def end_drag(self, x, y):
-        """Завершает перетаскивание"""
-        win32api.SetCursorPos((int(x), int(y)))
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
-        print(f"Завершение перетаскивания в точке: ({x}, {y})")
-
-    def move_cursor(self, x, y):
-        """Перемещает системный курсор в указанную позицию"""
-        win32api.SetCursorPos((int(x), int(y)))
 
     def apply_smoothing(self, target_x, target_y):
         """Применяет сглаживание к координатам курсора"""
@@ -187,17 +165,7 @@ class AdvancedCursorController:
 
         return (self.smoothed_x, self.smoothed_y)
 
-    def click_thread(self):
-        print("Запуск потока обработки кликов...")
-        print(
-            "Режимы: указательный+большой - левый клик, безымянный+большой - правый клик, удержание указательного+большого - drag & drop")
-        print(f"Уровень сглаживания: {SMOOTHING_LEVEL}")
-
-        prev_left_pinch = False
-        prev_right_pinch = False
-
-        # Новые переменные для буфера перетаскивания
-        drag_loss_time = None  # Время потери трекинга во время перетаскивания
+    def gesture_thread(self):
 
         while self.running:
             landmarks, target_pos = None, None
@@ -207,96 +175,7 @@ class AdvancedCursorController:
                 target_pos = self.hand_data.get('target_pos')
 
             if landmarks and target_pos:
-                thumb_tip = landmarks[4]
-                index_tip = landmarks[8]
-                ring_tip = landmarks[16]
-
-                left_pinch_distance = np.sqrt((thumb_tip.x - index_tip.x) ** 2 + (thumb_tip.y - index_tip.y) ** 2)
-                right_pinch_distance = np.sqrt((thumb_tip.x - ring_tip.x) ** 2 + (thumb_tip.y - ring_tip.y) ** 2)
-
-                current_time = time.time()
-
-                # --- Левый щипок ---
-                left_pinch = left_pinch_distance < CLICK_DISTANCE_THRESHOLD
-
-                if left_pinch:
-                    # Если мы в режиме перетаскивания, сбрасываем таймер потери
-                    if self.is_dragging:
-                        drag_loss_time = None
-
-                    # Логика активации перетаскивания
-                    if not self.is_dragging and self.drag_start_time is None:
-                        self.drag_start_time = current_time
-                        self.drag_activated = False
-                    elif self.drag_start_time is not None and not self.drag_activated:
-                        hold_duration = current_time - self.drag_start_time
-                        if hold_duration >= HOLD_THRESHOLD:
-                            self.is_dragging = True
-                            self.drag_activated = True
-                            # Сбрасываем сглаживание при начале перетаскивания для точности
-                            self.smoothed_x = None
-                            self.smoothed_y = None
-                            self.start_drag(target_pos[0], target_pos[1])
-                            print("Режим перетаскивания активирован")
-
-                    if self.is_dragging:
-                        # При перетаскивании применяем сглаживание для плавности
-                        smoothed_pos = self.apply_smoothing(target_pos[0], target_pos[1])
-                        self.move_cursor(smoothed_pos[0], smoothed_pos[1])
-
-                # --- Если щипка нет, но мы в режиме перетаскивания ---
-                elif self.is_dragging:
-                    if drag_loss_time is None:
-                        # Запоминаем время потери трекинга
-                        drag_loss_time = current_time
-                    elif current_time - drag_loss_time > DRAG_LOSS_TIMEOUT:
-                        # Если потеря превысила таймаут, завершаем перетаскивание
-                        self.end_drag(target_pos[0], target_pos[1])
-                        self.is_dragging = False
-                        self.drag_start_time = None
-                        self.drag_activated = False
-                        drag_loss_time = None
-                        # Сбрасываем сглаживание после завершения перетаскивания
-                        self.smoothed_x = None
-                        self.smoothed_y = None
-                        print("Перетаскивание завершено по таймауту")
-
-                # --- Правый щипок ---
-                right_pinch = right_pinch_distance < CLICK_DISTANCE_THRESHOLD
-
-                if right_pinch and not prev_right_pinch and not self.is_dragging:
-                    if (current_time - self.last_right_click_time) > CLICK_COOLDOWN:
-                        # Для кликов используем текущую позицию со сглаживанием
-                        smoothed_pos = self.apply_smoothing(target_pos[0], target_pos[1])
-                        self.perform_right_click(smoothed_pos[0], smoothed_pos[1])
-                        self.last_right_click_time = current_time
-
-                # --- Обработка завершения обычного (не буферного) режима ---
-                if prev_left_pinch and not left_pinch and not self.is_dragging:
-                    if self.drag_start_time is not None and not self.drag_activated:
-                        hold_duration = current_time - self.drag_start_time
-                        if hold_duration < HOLD_THRESHOLD and (
-                                current_time - self.last_left_click_time) > CLICK_COOLDOWN:
-                            # Для кликов используем текущую позицию со сглаживанием
-                            smoothed_pos = self.apply_smoothing(target_pos[0], target_pos[1])
-                            self.perform_left_click(smoothed_pos[0], smoothed_pos[1])
-                            self.last_left_click_time = current_time
-                        self.drag_start_time = None
-                        self.drag_activated = False
-
-                # Обновляем состояния
-                prev_left_pinch = left_pinch
-                prev_right_pinch = right_pinch
-
-                # Сбрасываем таймер удержания если нет щипка и не в режиме перетаскивания
-                if not left_pinch and not self.is_dragging:
-                    self.drag_start_time = None
-                    self.drag_activated = False
-
-                # Перемещаем курсор при обычном движении (если не в режиме перетаскивания) - С СОЛАЖИВАНИЕМ
-                if not self.is_dragging:
-                    smoothed_pos = self.apply_smoothing(target_pos[0], target_pos[1])
-                    self.move_cursor(smoothed_pos[0], smoothed_pos[1])
+                self.gesture_recognizer.recognize_and_execute(landmarks,target_pos)
 
             time.sleep(0.01)
 
@@ -359,7 +238,7 @@ class AdvancedCursorController:
         try:
             capture_t = threading.Thread(target=self.capture_thread, daemon=True)
             tracking_t = threading.Thread(target=self.tracking_thread, daemon=True)
-            click_t = threading.Thread(target=self.click_thread, daemon=True)
+            click_t = threading.Thread(target=self.gesture_thread, daemon=True)
             capture_t.start()
             tracking_t.start()
             click_t.start()
