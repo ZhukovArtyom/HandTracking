@@ -4,6 +4,8 @@ import threading
 import numpy as np
 import win32api
 import win32con
+import keyboard
+import subprocess
 
 from config_loader import config
 
@@ -22,6 +24,8 @@ class GestureRecognizer:
         self.gestures_file = gestures_file
         self.gestures = []
         self.active_gestures = {}  # {gesture_id: {'start_time': timestamp, 'hold_activated': False}}
+        self.blocked_until_release = False  # Флаг блокировки других жестов
+        self.blocking_gesture_id = None  # ID жеста, который блокирует остальные
 
         self.last_execution_time = {}  # {gesture_id: last_execution_timestamp}
         self.lock = threading.Lock()
@@ -113,6 +117,10 @@ class GestureRecognizer:
         gesture_id = gesture['id']
         hold_enabled = gesture.get('hold_enabled', False)
 
+        # Если есть активный блокирующий жест и это не тот же жест
+        if self.blocked_until_release and self.blocking_gesture_id != gesture_id:
+
+            return False
 
         # Проверяем, активен ли уже жест
         if gesture_id not in self.active_gestures:
@@ -122,8 +130,14 @@ class GestureRecognizer:
                 'hold_activated': False
             }
 
+            # Устанавливаем блокировку для других жестов
+            if not self.blocked_until_release:
+                self.blocked_until_release = True
+                self.blocking_gesture_id = gesture_id
+                print(f"=== Жест {gesture['name']} заблокировал другие жесты ===")
+
             print(f"Жест активирован: {gesture['name']}")
-            self._perform_action(gesture['on_press'], target_pos, gesture)
+            self._perform_action(target_pos, gesture)
             self.last_execution_time[gesture_id] = current_time
 
             return True
@@ -139,7 +153,7 @@ class GestureRecognizer:
                     gesture_data['hold_activated'] = True
                     if 'on_press' in gesture:
                         print(f"Жест удержан: {gesture['name']} ({(hold_duration * 1000):.0f}ms)")
-                        self._perform_action(gesture['on_press'], target_pos, gesture)
+                        self._perform_action(target_pos, gesture)
                         self.last_execution_time[gesture_id] = current_time
                     return True
 
@@ -156,72 +170,85 @@ class GestureRecognizer:
         # Находим жест по ID
         for gesture in self.gestures:
             if gesture['id'] == gesture_id:
-
                 print(f"Жест деактивирован: {gesture['name']}")
-                self._perform_action(gesture['on_release'], target_pos, gesture)
+                self._perform_action(target_pos, gesture, True)
+
+                # Снимаем блокировку, если это был блокирующий жест
+                if self.blocking_gesture_id == gesture_id:
+                    self.blocked_until_release = False
+                    self.blocking_gesture_id = None
+                    print(f"=== Блокировка жестов снята ===")
                 break
 
     def perform_left_click(self, x, y):
-
-
-
         # Левый клик
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
-
         print(f"Левый клик! В точке: ({x:.0f}, {y:.0f})")
 
     def perform_left_click_release(self, x, y):
-
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
         print(f"Левый клик отпущен! В точке: ({x:.0f}, {y:.0f})")
 
     def perform_right_click(self, x, y):
-
         # Правый клик
         win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0)
-
         print(f"Правый клик! В точке: ({x:.0f}, {y:.0f})")
 
     def perform_right_click_release(self, x, y):
-
         win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0)
         print(f"правый клик отпущен! В точке: ({x:.0f}, {y:.0f})")
 
-    def _perform_action(self, action, target_pos, gesture):
-        """
-        Выполняет действие жеста
+    def _perform_action(self, target_pos, gesture, on_release: bool = False):
+        type = gesture['type']
 
-        Args:
-            action: тип действия (str)
-            target_pos: целевая позиция (x, y)
-            gesture: словарь с описанием жеста
-        """
-        if action == 'left_click_press':
-            if target_pos:
-                self.perform_left_click(target_pos[0], target_pos[1])
-            else:
-                print(f"Ошибка: нет позиции для левого клика")
+        if type == "mouse":
+            action = gesture['on_press'] if not on_release else gesture['on_release']
+            if action == 'left_click_press':
+                if target_pos:
+                    self.perform_left_click(target_pos[0], target_pos[1])
+                else:
+                    print(f"Ошибка: нет позиции для левого клика")
 
-        elif action == 'left_click_release':
-            if target_pos:
-                self.perform_left_click_release(target_pos[0], target_pos[1])
-            else:
-                print(f"Ошибка: нет позиции для правого клика")
+            elif action == 'left_click_release':
+                if target_pos:
+                    self.perform_left_click_release(target_pos[0], target_pos[1])
+                else:
+                    print(f"Ошибка: нет позиции для правого клика")
 
-        elif action == 'right_click_press':
-            if target_pos:
-                self.perform_right_click(target_pos[0], target_pos[1])
-            else:
-                print(f"Ошибка: нет позиции для правого клика")
+            elif action == 'right_click_press':
+                if target_pos:
+                    self.perform_right_click(target_pos[0], target_pos[1])
+                else:
+                    print(f"Ошибка: нет позиции для правого клика")
 
-        elif action == 'right_click_release':
-            if target_pos:
-                self.perform_right_click_release(target_pos[0], target_pos[1])
+            elif action == 'right_click_release':
+                if target_pos:
+                    self.perform_right_click_release(target_pos[0], target_pos[1])
+                else:
+                    print(f"Ошибка: нет позиции для правого клика")
             else:
-                print(f"Ошибка: нет позиции для правого клика")
+                print(f"Неизвестное действие: {action}")
+
+
+        elif type == "keyboard":
+            if not on_release:
+                action = gesture['on_press']
+                keyboard.send(action)
+            else:
+                return
+
+
+        elif type == "program":
+            if not on_release:
+                action = gesture['on_press']
+                subprocess.Popen([action])
+            else:
+                return
 
         else:
-            print(f"Неизвестное действие: {action}")
+            print(f"Тип действия не обозначен")
+
+
 
     def recognize_and_execute(self, landmarks, target_pos):
         """
@@ -238,6 +265,12 @@ class GestureRecognizer:
                 for gesture_id in list(self.active_gestures.keys()):
                     self.on_gesture_release(gesture_id, target_pos)
                 self.active_gestures.clear()
+
+                # Сбрасываем блокировку
+                if self.blocked_until_release:
+                    self.blocked_until_release = False
+                    self.blocking_gesture_id = None
+                    print(f"=== Блокировка сброшена (рука потеряна) ===")
             return
 
         current_time = time.time()
@@ -268,3 +301,7 @@ class GestureRecognizer:
                 self.on_gesture_release(gesture_id, None)
             self.active_gestures.clear()
             self.last_execution_time.clear()
+
+            # Сбрасываем блокировку
+            self.blocked_until_release = False
+            self.blocking_gesture_id = None

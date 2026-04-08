@@ -1,9 +1,32 @@
 {
   "gestures": [
     {
+      "id": "browser",
+      "name": "браузер",
+      "points_groups": [[4, 17]],
+      "type": "program",
+      "on_press": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "on_release": "",
+      "params": {},
+      "cooldown": 0.5,
+      "hold_enabled": false
+    },
+    {
+      "id": "paste",
+      "name": "вставить",
+      "points_groups": [[4, 20]],
+      "type": "keyboard",
+      "on_press": "ctrl+v",
+      "on_release": "",
+      "params": {},
+      "cooldown": 0.5,
+      "hold_enabled": false
+    },
+    {
       "id": "left_click",
       "name": "Левый клик",
       "points_groups": [[4, 8]],
+      "type": "mouse",
       "on_press": "left_click_press",
       "on_release": "left_click_release",
       "params": {},
@@ -14,6 +37,7 @@
       "id": "right_click",
       "name": "Правый клик",
       "points_groups": [[4, 16]],
+      "type": "mouse",
       "on_press": "right_click_press",
       "on_release": "right_click_release",
       "params": {},
