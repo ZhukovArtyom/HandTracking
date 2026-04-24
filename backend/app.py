@@ -6,6 +6,7 @@ import threading
 import pyautogui
 import psutil
 import os
+import winreg
 
 # --- Импорты для управления курсором (Windows) ---
 import win32api
@@ -37,7 +38,6 @@ PROCESS_PRIORITY_HIGH = True
 # --- НАСТРОЙКИ УПРАВЛЕНИЯ РУКАМИ ---
 
 CONTROL_HAND = config.get('cursor.control_hand')  # 'left', 'right', 'auto'
-
 
 class AdvancedCursorController:
     def __init__(self):
@@ -99,6 +99,8 @@ class AdvancedCursorController:
         self.active_hand = None  # 'left' или 'right'
         self.active_hand_detected = False
         self.last_active_hand_update = time.time()
+
+
 
     def capture_thread(self):
         """Поток захвата видео"""
@@ -334,6 +336,7 @@ class AdvancedCursorController:
         print("Запуск программы...")
 
         try:
+
             capture_t = threading.Thread(target=self.capture_thread, daemon=True)
             tracking_t = threading.Thread(target=self.tracking_thread, daemon=True)
             gesture_t = threading.Thread(target=self.gesture_thread, daemon=True)

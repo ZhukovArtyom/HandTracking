@@ -14,7 +14,7 @@
       "name": "браузер",
       "points_groups": [["second_8", "main_8"]],
       "type": "program",
-      "on_press": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "on_press": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\147.0.3912.72\\msedge.exe",
       "on_release": ""
 
     },

@@ -15,7 +15,7 @@
   },
   "gestures": {
     "click_distance_threshold": 0.05,
-    "activation_delay": 0.2
+    "activation_delay": 0
 
   }
 }
