@@ -3,48 +3,40 @@
     {
       "id": "screenshot",
       "name": "Скриншот",
-      "points_groups": [["left_8","right_4"],["left_4","right_8"]],
+      "points_groups": [["main_8","second_4"],["main_4","second_8"]],
       "type": "keyboard",
       "on_press": "print screen",
-      "on_release": "",
-      "params": {},
-      "cooldown": 0.5,
-      "hold_enabled": false
+      "on_release": ""
+
     },
     {
       "id": "browser",
       "name": "браузер",
-      "points_groups": [["left_8", "right_8"]],
+      "points_groups": [["second_8", "main_8"]],
       "type": "program",
       "on_press": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-      "on_release": "",
-      "params": {},
-      "cooldown": 0.5,
-      "hold_enabled": false
+      "on_release": ""
+
     },
     {
       "id": "left_click",
       "name": "Левый клик правой рукой",
-      "points_groups": [["right_4", "right_8"]],
+      "points_groups": [["main_4", "main_8"]],
       "type": "system",
       "on_press": "left_click_press",
-      "on_release": "left_click_release",
-      "params": {},
-      "cooldown": 0.5,
-      "hold_enabled": false
+      "on_release": "left_click_release"
+
     },
 
     {
       "id": "right_click",
       "name": "Правый клик правой рукой",
-      "points_groups": [["right_4", "right_12"]],
+      "points_groups": [["main_4", "main_12"]],
       "hand": "right",
       "type": "system",
       "on_press": "right_click_press",
-      "on_release": "right_click_release",
-      "params": {},
-      "cooldown": 0.5,
-      "hold_enabled": false
+      "on_release": "right_click_release"
+
     }
 
   ]

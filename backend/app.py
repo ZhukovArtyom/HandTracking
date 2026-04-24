@@ -257,25 +257,15 @@ class AdvancedCursorController:
                 # Берем точки левой руки (если есть)
                 if self.hand_data['left']['landmarks'] is not None:
                     landmarks_dict['left'] = self.hand_data['left']['landmarks']
-                    # Для одноручных жестов используем позицию активной руки
-                    if self.active_hand == 'left':
-                        target_pos = self.hand_data['left'].get('target_pos')
+
 
                 # Берем точки правой руки (если есть)
                 if self.hand_data['right']['landmarks'] is not None:
                     landmarks_dict['right'] = self.hand_data['right']['landmarks']
-                    if self.active_hand == 'right':
-                        target_pos = self.hand_data['right'].get('target_pos')
 
-                # Если нет активной руки, но есть хоть одна рука - берем ее позицию
-                # if target_pos is None:
-                #     if landmarks_dict['left'] is not None:
-                #         target_pos = self.hand_data['left'].get('target_pos')
-                #     elif landmarks_dict['right'] is not None:
-                #         target_pos = self.hand_data['right'].get('target_pos')
 
             # Передаем словарь с точками обеих рук в recognizer
-            self.gesture_recognizer.recognize_and_execute(landmarks_dict, target_pos)
+            self.gesture_recognizer.recognize_and_execute(landmarks_dict)
 
             time.sleep(0.01)
 

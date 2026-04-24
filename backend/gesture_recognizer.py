@@ -10,15 +10,12 @@ import subprocess
 from config_loader import config
 
 CLICK_DISTANCE_THRESHOLD = config.get('gestures.click_distance_threshold')
+CONTROL_HAND = config.get('cursor.control_hand')
+SECOND_HAND = "left" if CONTROL_HAND == "right" else "right"
 
 class GestureRecognizer:
     def __init__(self, gestures_file='config/gestures.json'):
-        """
-        Инициализация распознавателя жестов
 
-        Args:
-            gestures_file: путь к JSON файлу с описанием жестов
-        """
         self.gestures_file = gestures_file
         self.gestures = []
         self.active_gestures = {}  # {gesture_id: {'start_time': timestamp, 'hold_activated': False}}
@@ -71,6 +68,8 @@ class GestureRecognizer:
             # Разбираем спецификацию точки
             # Межручная точка: например 'left_8' или 'right_8'
             hand_type, idx = point_spec.split('_')
+            hand_type = CONTROL_HAND if hand_type == "main" else SECOND_HAND
+
             idx = int(idx)
             if hand_type in landmarks_dict and landmarks_dict[hand_type] is not None:
                 if idx < len(landmarks_dict[hand_type]):
@@ -102,10 +101,9 @@ class GestureRecognizer:
 
         return True
 
-    def execute_action(self, gesture, current_time, target_pos=None):
+    def execute_action(self, gesture, current_time):
 
         gesture_id = gesture['id']
-        hold_enabled = gesture.get('hold_enabled', False)
 
         # Если есть активный блокирующий жест и это не тот же жест
         if self.blocked_until_release and self.blocking_gesture_id != gesture_id:
@@ -126,7 +124,7 @@ class GestureRecognizer:
                 print(f"=== Жест {gesture['name']} заблокировал другие жесты ===")
 
             print(f"Жест активирован: {gesture['name']}")
-            self._perform_action(target_pos, gesture)
+            self._perform_action(gesture)
             self.last_execution_time[gesture_id] = current_time
 
             return True
@@ -134,19 +132,13 @@ class GestureRecognizer:
 
             return False
 
-    def on_gesture_release(self, gesture_id, target_pos=None):
-        """
-        Вызывается когда жест перестает распознаваться
+    def on_gesture_release(self, gesture_id):
 
-        Args:
-            gesture_id: идентификатор жеста
-            target_pos: целевая позиция (x, y) - опционально
-        """
         # Находим жест по ID
         for gesture in self.gestures:
             if gesture['id'] == gesture_id:
                 print(f"Жест деактивирован: {gesture['name']}")
-                self._perform_action(target_pos, gesture, True)
+                self._perform_action(gesture, True)
 
                 # Снимаем блокировку, если это был блокирующий жест
                 if self.blocking_gesture_id == gesture_id:
@@ -155,48 +147,38 @@ class GestureRecognizer:
                     print(f"=== Блокировка жестов снята ===")
                 break
 
-    def perform_left_click(self, x, y):
-        # Левый клик
-        if x is not None and y is not None:
-            win32api.SetCursorPos((int(x), int(y)))
+    def perform_left_click(self):
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
-        print(f"Левый клик! В точке: ({x:.0f}, {y:.0f})" if x else "Левый клик!")
 
-    def perform_left_click_release(self, x, y):
+
+    def perform_left_click_release(self):
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
-        print(f"Левый клик отпущен!")
 
-    def perform_right_click(self, x, y):
-        # Правый клик
-        if x is not None and y is not None:
-            win32api.SetCursorPos((int(x), int(y)))
-        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0)
-        print(f"Правый клик! В точке: ({x:.0f}, {y:.0f})" if x else "Правый клик!")
 
-    def perform_right_click_release(self, x, y):
+    def perform_right_click(self):
+       win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0)
+
+
+    def perform_right_click_release(self):
         win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0)
-        print(f"Правый клик отпущен!")
 
-    def _perform_action(self, target_pos, gesture, on_release: bool = False):
+
+    def _perform_action(self, gesture, on_release: bool = False):
         gesture_type = gesture['type']
 
         if gesture_type == "system":
             action = gesture['on_press'] if not on_release else gesture['on_release']
             if action == 'left_click_press':
-                self.perform_left_click(target_pos[0] if target_pos else None,
-                                        target_pos[1] if target_pos else None)
+                self.perform_left_click()
 
             elif action == 'left_click_release':
-                self.perform_left_click_release(target_pos[0] if target_pos else None,
-                                                target_pos[1] if target_pos else None)
+                self.perform_left_click_release()
 
             elif action == 'right_click_press':
-                self.perform_right_click(target_pos[0] if target_pos else None,
-                                         target_pos[1] if target_pos else None)
+                self.perform_right_click()
 
             elif action == 'right_click_release':
-                self.perform_right_click_release(target_pos[0] if target_pos else None,
-                                                 target_pos[1] if target_pos else None)
+                self.perform_right_click_release()
             else:
                 print(f"Неизвестное действие: {action}")
 
@@ -217,31 +199,9 @@ class GestureRecognizer:
         else:
             print(f"Тип действия не обозначен")
 
-    def get_hand_position(self, landmarks_dict, hand_type='left'):
-        """
-        Получает позицию для курсора из указанной руки
 
-        Args:
-            landmarks_dict: словарь с точками рук
-            hand_type: 'left' или 'right'
+    def recognize_and_execute(self, landmarks_dict):
 
-        Returns:
-            tuple: (x, y) или None
-        """
-        if hand_type in landmarks_dict and landmarks_dict[hand_type] is not None:
-            # Используем точку запястья (индекс 17) или кончик указательного пальца
-            wrist = landmarks_dict[hand_type][17]
-            return (wrist.x, wrist.y)
-        return None
-
-    def recognize_and_execute(self, landmarks_dict, target_pos=None):
-        """
-        Распознает жест и выполняет соответствующее действие
-
-        Args:
-            landmarks_dict: словарь с точками {'left': [...], 'right': [...]}
-            target_pos: целевая позиция (x, y) для одноручных жестов, опционально
-        """
         # Проверяем, есть ли хоть какие-то точки
         has_any_hand = False
         for hand_type in ['left', 'right']:
@@ -253,7 +213,7 @@ class GestureRecognizer:
             # Если нет рук, сбрасываем все активные жесты
             with self.lock:
                 for gesture_id in list(self.active_gestures.keys()):
-                    self.on_gesture_release(gesture_id, None)
+                    self.on_gesture_release(gesture_id)
                 self.active_gestures.clear()
 
                 if self.blocked_until_release:
@@ -272,28 +232,12 @@ class GestureRecognizer:
                 if self.check_gesture(landmarks_dict, gesture):
                     active_gesture_ids.add(gesture['id'])
 
-                    # Определяем позицию для курсора (если нужно)
-                    pos = target_pos
-                    if pos is None:
-                        # Для двуручных жестов можно определить позицию, например,
-                        # среднюю точку между запястьями
-                        left_pos = self.get_hand_position(landmarks_dict, 'left')
-                        right_pos = self.get_hand_position(landmarks_dict, 'right')
-                        if left_pos and right_pos:
-                            # Средняя точка между руками
-                            pos = ((left_pos[0] + right_pos[0]) / 2,
-                                   (left_pos[1] + right_pos[1]) / 2)
-                        elif left_pos:
-                            pos = left_pos
-                        elif right_pos:
-                            pos = right_pos
-
-                    self.execute_action(gesture, current_time, pos)
+                    self.execute_action(gesture, current_time)
 
             # Проверяем, какие жесты перестали быть активными
             for gesture_id in list(self.active_gestures.keys()):
                 if gesture_id not in active_gesture_ids:
-                    self.on_gesture_release(gesture_id, None)
+                    self.on_gesture_release(gesture_id)
                     del self.active_gestures[gesture_id]
 
     def reload_gestures(self):
@@ -301,7 +245,7 @@ class GestureRecognizer:
         self.load_gestures()
         with self.lock:
             for gesture_id in list(self.active_gestures.keys()):
-                self.on_gesture_release(gesture_id, None)
+                self.on_gesture_release(gesture_id)
             self.active_gestures.clear()
             self.last_execution_time.clear()
             self.blocked_until_release = False

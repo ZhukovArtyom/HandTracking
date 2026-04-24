@@ -7,14 +7,14 @@
     "path": "hand_landmarker.task"
   },
   "cursor": {
-    "sensitivity_zone_percent": 50,
-    "sensitivity_zone_X": 0,
-    "sensitivity_zone_Y": 100,
+    "sensitivity_zone_percent": 60,
+    "sensitivity_zone_X": 90,
+    "sensitivity_zone_Y": 50,
     "smoothing_level": 0.5,
-    "control_hand": "left"
+    "control_hand": "right"
   },
   "gestures": {
-    "click_distance_threshold": 0.045
+    "click_distance_threshold": 0.05
 
   }
 }
