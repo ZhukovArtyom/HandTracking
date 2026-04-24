@@ -10,8 +10,11 @@ import subprocess
 from config_loader import config
 
 CLICK_DISTANCE_THRESHOLD = config.get('gestures.click_distance_threshold')
+ACTIVATION_DELAY = config.get('gestures.activation_delay')
+
 CONTROL_HAND = config.get('cursor.control_hand')
 SECOND_HAND = "left" if CONTROL_HAND == "right" else "right"
+
 
 class GestureRecognizer:
     def __init__(self, gestures_file='config/gestures.json'):
@@ -19,6 +22,7 @@ class GestureRecognizer:
         self.gestures_file = gestures_file
         self.gestures = []
         self.active_gestures = {}  # {gesture_id: {'start_time': timestamp, 'hold_activated': False}}
+        self.pending_gestures = {}  # {gesture_id: {'timer': timer_object, 'gesture': gesture, 'first_detected': timestamp}}
         self.blocked_until_release = False  # Флаг блокировки других жестов
         self.blocking_gesture_id = None  # ID жеста, который блокирует остальные
 
@@ -101,17 +105,25 @@ class GestureRecognizer:
 
         return True
 
-    def execute_action(self, gesture, current_time):
+    def cancel_pending_gesture(self, gesture_id):
+        """Отменяет отложенный жест"""
+        if gesture_id in self.pending_gestures:
+            pending = self.pending_gestures[gesture_id]
+            if pending['timer'] is not None:
+                pending['timer'].cancel()
+            del self.pending_gestures[gesture_id]
+            print(f"Жест отменен до активации")
 
+    def execute_after_delay(self, gesture, current_time):
+        """Выполняет жест после задержки"""
         gesture_id = gesture['id']
 
-        # Если есть активный блокирующий жест и это не тот же жест
-        if self.blocked_until_release and self.blocking_gesture_id != gesture_id:
-            return False
+        # Проверяем, что жест все еще в ожидании и не был отменен
+        if gesture_id in self.pending_gestures:
+            # Убираем из pending до выполнения
+            del self.pending_gestures[gesture_id]
 
-        # Проверяем, активен ли уже жест
-        if gesture_id not in self.active_gestures:
-            # Жест только начался - вызываем on_press
+            # Выполняем действие
             self.active_gestures[gesture_id] = {
                 'start_time': current_time,
                 'hold_activated': False
@@ -127,41 +139,96 @@ class GestureRecognizer:
             self._perform_action(gesture)
             self.last_execution_time[gesture_id] = current_time
 
-            return True
-        else:
+    def execute_action(self, gesture, current_time):
+        """Запускает таймер для отложенной активации жеста"""
+        gesture_id = gesture['id']
 
+        # Если жест уже активен - игнорируем
+        if gesture_id in self.active_gestures:
             return False
 
+        # Если есть активный блокирующий жест и это не тот же жест
+        if self.blocked_until_release and self.blocking_gesture_id != gesture_id:
+            return False
+
+        # Если жест уже в очереди ожидания - просто возвращаемся, не обновляем таймер
+        if gesture_id in self.pending_gestures:
+            return True
+
+        # Если есть другой отложенный жест - отменяем его и запускаем новый
+        if self.pending_gestures:
+            print(f"Обнаружен новый жест, отмена предыдущего")
+            for pending_id in list(self.pending_gestures.keys()):
+                self.cancel_pending_gesture(pending_id)
+
+        # Особый случай: задержка 0 секунд - активируем мгновенно
+        if ACTIVATION_DELAY <= 0:
+            print(f"Жест {gesture['name']} активирован мгновенно")
+            self.active_gestures[gesture_id] = {
+                'start_time': current_time,
+                'hold_activated': False
+            }
+
+            if not self.blocked_until_release:
+                self.blocked_until_release = True
+                self.blocking_gesture_id = gesture_id
+                print(f"=== Жест {gesture['name']} заблокировал другие жесты ===")
+
+            print(f"Жест активирован: {gesture['name']}")
+            self._perform_action(gesture)
+            self.last_execution_time[gesture_id] = current_time
+            return True
+
+        # Создаем новый отложенный жест с таймером
+        timer = threading.Timer(ACTIVATION_DELAY, self.execute_after_delay, [gesture, current_time])
+        timer.daemon = True
+        timer.start()
+
+        self.pending_gestures[gesture_id] = {
+            'timer': timer,
+            'gesture': gesture,
+            'first_detected': current_time
+        }
+
+        print(f"Жест {gesture['name']} обнаружен, активация через {ACTIVATION_DELAY} секунд")
+        return True
+
     def on_gesture_release(self, gesture_id):
+        """Вызывается когда жест перестает распознаваться"""
 
-        # Находим жест по ID
-        for gesture in self.gestures:
-            if gesture['id'] == gesture_id:
-                print(f"Жест деактивирован: {gesture['name']}")
-                self._perform_action(gesture, True)
+        # Если жест был в ожидании - отменяем таймер
+        if gesture_id in self.pending_gestures:
+            self.cancel_pending_gesture(gesture_id)
+            return
 
-                # Снимаем блокировку, если это был блокирующий жест
-                if self.blocking_gesture_id == gesture_id:
-                    self.blocked_until_release = False
-                    self.blocking_gesture_id = None
-                    print(f"=== Блокировка жестов снята ===")
-                break
+        # Если жест был активен - выполняем on_release
+        if gesture_id in self.active_gestures:
+            # Находим жест по ID
+            for gesture in self.gestures:
+                if gesture['id'] == gesture_id:
+                    print(f"Жест деактивирован: {gesture['name']}")
+                    self._perform_action(gesture, True)
+
+                    # Снимаем блокировку, если это был блокирующий жест
+                    if self.blocking_gesture_id == gesture_id:
+                        self.blocked_until_release = False
+                        self.blocking_gesture_id = None
+                        print(f"=== Блокировка жестов снята ===")
+                    break
+
+            del self.active_gestures[gesture_id]
 
     def perform_left_click(self):
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
 
-
     def perform_left_click_release(self):
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
 
-
     def perform_right_click(self):
-       win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0)
-
+        win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0)
 
     def perform_right_click_release(self):
         win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0)
-
 
     def _perform_action(self, gesture, on_release: bool = False):
         gesture_type = gesture['type']
@@ -199,9 +266,7 @@ class GestureRecognizer:
         else:
             print(f"Тип действия не обозначен")
 
-
     def recognize_and_execute(self, landmarks_dict):
-
         # Проверяем, есть ли хоть какие-то точки
         has_any_hand = False
         for hand_type in ['left', 'right']:
@@ -212,6 +277,10 @@ class GestureRecognizer:
         if not has_any_hand:
             # Если нет рук, сбрасываем все активные жесты
             with self.lock:
+                # Отменяем все отложенные жесты
+                for gesture_id in list(self.pending_gestures.keys()):
+                    self.cancel_pending_gesture(gesture_id)
+
                 for gesture_id in list(self.active_gestures.keys()):
                     self.on_gesture_release(gesture_id)
                 self.active_gestures.clear()
@@ -231,19 +300,26 @@ class GestureRecognizer:
             for gesture in self.gestures:
                 if self.check_gesture(landmarks_dict, gesture):
                     active_gesture_ids.add(gesture['id'])
-
                     self.execute_action(gesture, current_time)
 
             # Проверяем, какие жесты перестали быть активными
             for gesture_id in list(self.active_gestures.keys()):
                 if gesture_id not in active_gesture_ids:
                     self.on_gesture_release(gesture_id)
-                    del self.active_gestures[gesture_id]
+
+            # Проверяем отложенные жесты - если жест больше не активен, отменяем
+            for gesture_id in list(self.pending_gestures.keys()):
+                if gesture_id not in active_gesture_ids:
+                    self.cancel_pending_gesture(gesture_id)
 
     def reload_gestures(self):
         """Перезагружает жесты из файла"""
         self.load_gestures()
         with self.lock:
+            # Отменяем все отложенные жесты
+            for gesture_id in list(self.pending_gestures.keys()):
+                self.cancel_pending_gesture(gesture_id)
+
             for gesture_id in list(self.active_gestures.keys()):
                 self.on_gesture_release(gesture_id)
             self.active_gestures.clear()
