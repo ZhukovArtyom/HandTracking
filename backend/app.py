@@ -72,8 +72,8 @@ class AdvancedCursorController:
             options = vision.HandLandmarkerOptions(
                 base_options=base_options,
                 num_hands=2,  # <-- Важно: отслеживаем до 2 рук
-                min_hand_detection_confidence=0.6,
-                min_tracking_confidence=0.5
+                min_hand_detection_confidence=0.55,
+                min_tracking_confidence=0.45
             )
             self.landmarker = vision.HandLandmarker.create_from_options(options)
             print("Модель успешно загружена.")

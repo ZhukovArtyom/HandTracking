@@ -10,13 +10,20 @@
 
     },
     {
-      "id": "browser",
-      "name": "браузер",
-      "points_groups": [["second_8", "main_8"]],
-      "type": "program",
-      "on_press": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\147.0.3912.72\\msedge.exe",
+      "id": "mouse_up",
+      "name": "прокрутка вверх",
+      "points_groups": [["second_4", "second_8"],["main_4", "main_8"]],
+      "type": "system",
+      "on_press": "wheel_up",
       "on_release": ""
-
+    },
+    {
+      "id": "mouse_down",
+      "name": "прокрутка вниз",
+      "points_groups": [["second_4", "second_8"],["main_4", "main_12"]],
+      "type": "system",
+      "on_press": "wheel_down",
+      "on_release": ""
     },
     {
       "id": "left_click",

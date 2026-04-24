@@ -229,6 +229,12 @@ class GestureRecognizer:
 
     def perform_right_click_release(self):
         win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0)
+    def perform_wheel_up(self):
+        for _ in range(1):
+            win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, 0, 0, 120, 0)
+    def perform_wheel_down(self):
+        for _ in range(1):
+            win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, 0, 0, -120, 0)
 
     def _perform_action(self, gesture, on_release: bool = False):
         gesture_type = gesture['type']
@@ -246,6 +252,12 @@ class GestureRecognizer:
 
             elif action == 'right_click_release':
                 self.perform_right_click_release()
+
+            elif action == 'wheel_up':
+                self.perform_wheel_up()
+
+            elif action == 'wheel_down':
+                self.perform_wheel_down()
             else:
                 print(f"Неизвестное действие: {action}")
 
