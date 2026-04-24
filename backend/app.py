@@ -21,19 +21,22 @@ from gesture_recognizer import GestureRecognizer
 CAMERA_WIDTH = config.get('camera.width')
 CAMERA_HEIGHT = config.get('camera.height')
 MODEL_PATH = config.get('model.path')
-SENSITIVITY_ZONE_PERCENT = config.get('cursor.sensitivity_zone_percent')
-CLICK_DISTANCE_THRESHOLD = config.get('gestures.click_distance_threshold')
-CLICK_COOLDOWN = config.get('gestures.click_cooldown')
-#DOUBLE_CLICK_INTERVAL = 1.0   #Интервал для двойного клика (не используется, оставлен для совместимости)
-HOLD_THRESHOLD = config.get('gestures.hold_threshold')  # Время удержания для активации режима перетаскивания (в секундах)
 
-DRAG_LOSS_TIMEOUT = config.get('gestures.drag_loss_timeout')  # 0.1 секунды буфера (можно настроить)
+SENSITIVITY_ZONE_PERCENT = config.get('cursor.sensitivity_zone_percent')
+SENSITIVITY_ZONE_X = config.get('cursor.sensitivity_zone_X')
+SENSITIVITY_ZONE_Y = config.get('cursor.sensitivity_zone_Y')
+
+CLICK_DISTANCE_THRESHOLD = config.get('gestures.click_distance_threshold')
 
 # --- НАСТРОЙКИ СГЛАЖИВАНИЯ КУРСОРА ---
-SMOOTHING_LEVEL = config.get('cursor.smoothing_level')  # Уровень сглаживания (0.0 - без сглаживания, 1.0 - максимальное сглаживание)
+SMOOTHING_LEVEL = config.get('cursor.smoothing_level')
 
 # --- НАСТРОЙКИ ПРОИЗВОДИТЕЛЬНОСТИ ---
-PROCESS_PRIORITY_HIGH = True  # Высокий приоритет процесса
+PROCESS_PRIORITY_HIGH = True
+
+# --- НАСТРОЙКИ УПРАВЛЕНИЯ РУКАМИ ---
+
+CONTROL_HAND = config.get('cursor.control_hand')  # 'left', 'right', 'auto'
 
 
 class AdvancedCursorController:
@@ -41,22 +44,16 @@ class AdvancedCursorController:
         self.running = True
         self.frame_lock = threading.Lock()
         self.data_lock = threading.Lock()
-        self.hand_data = {}
-        self.last_left_click_time = 0
-        self.last_right_click_time = 0
-
-        # Переменные для удержания (drag & drop)
-        self.is_dragging = False
-        self.drag_start_time = None
-        self.drag_activated = False
+        self.hand_data = {
+            'left': {'landmarks': None, 'center': None, 'target_pos': None, 'handedness': None},
+            'right': {'landmarks': None, 'center': None, 'target_pos': None, 'handedness': None}
+        }
 
         # Переменные для сглаживания курсора
         self.smoothed_x = None
         self.smoothed_y = None
 
-        # Коэффициент сглаживания (преобразуем SMOOTHING_LEVEL в коэффициент скорости)
-        # При SMOOTHING_LEVEL = 0 -> smoothing_speed = 1.0 (без сглаживания)
-        # При SMOOTHING_LEVEL = 1 -> smoothing_speed = 0.01 (максимальное сглаживание)
+        # Коэффициент сглаживания
         self.smoothing_speed = max(0.01, 1.0 - SMOOTHING_LEVEL)
 
         # Устанавливаем высокий приоритет процесса
@@ -71,8 +68,13 @@ class AdvancedCursorController:
         print("Инициализация модели MediaPipe...")
         try:
             base_options = python.BaseOptions(model_asset_path=MODEL_PATH)
-            options = vision.HandLandmarkerOptions(base_options=base_options, num_hands=1,
-                                                   min_hand_detection_confidence=0.6, min_tracking_confidence=0.5)
+            # Изменяем num_hands на 2 для обнаружения обеих рук
+            options = vision.HandLandmarkerOptions(
+                base_options=base_options,
+                num_hands=2,  # <-- Важно: отслеживаем до 2 рук
+                min_hand_detection_confidence=0.6,
+                min_tracking_confidence=0.5
+            )
             self.landmarker = vision.HandLandmarker.create_from_options(options)
             print("Модель успешно загружена.")
         except Exception as e:
@@ -93,6 +95,11 @@ class AdvancedCursorController:
 
         self.gesture_recognizer = GestureRecognizer()
 
+        # Переменная для хранения ID выбранной руки для управления курсором
+        self.active_hand = None  # 'left' или 'right'
+        self.active_hand_detected = False
+        self.last_active_hand_update = time.time()
+
     def capture_thread(self):
         """Поток захвата видео"""
         print("Запуск потока захвата...")
@@ -101,14 +108,15 @@ class AdvancedCursorController:
             if success:
                 with self.frame_lock:
                     self.current_frame = cv2.flip(frame, 1)
-
+            time.sleep(0.001)
 
     def tracking_thread(self):
-        """Поток отслеживания руки"""
+        """Поток отслеживания рук (обеих)"""
         print("Запуск потока отслеживания...")
-        zone_factor = SENSITIVITY_ZONE_PERCENT / 100.0
-        x_margin = (1.0 - zone_factor) / 2.0
-        y_margin = (1.0 - zone_factor) / 2.0
+
+        # Вычисляем размеры зоны отслеживания
+        zone_width_percent = SENSITIVITY_ZONE_PERCENT / 100.0
+        zone_height_percent = SENSITIVITY_ZONE_PERCENT / 100.0
 
         while self.running:
             frame_to_process = None
@@ -121,63 +129,158 @@ class AdvancedCursorController:
                 image_rgb = cv2.cvtColor(frame_to_process, cv2.COLOR_BGR2RGB)
                 mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image_rgb)
                 detection_result = self.landmarker.detect(mp_image)
-                hand_landmarks, hand_center, target_pos = None, None, None
 
-                if detection_result.hand_landmarks:
-                    hand_landmarks = detection_result.hand_landmarks[0]
-                    # Используем точку 0 (запястье) вместо среднего арифметического
-                    wrist_x_rel = hand_landmarks[17].x
-                    wrist_y_rel = hand_landmarks[17].y
-                    screen_x = np.interp(wrist_x_rel, (x_margin, 1.0 - x_margin), (0, self.screen_width))
-                    screen_y = np.interp(wrist_y_rel, (y_margin, 1.0 - y_margin), (0, self.screen_height))
-                    target_pos = (screen_x, screen_y)
-                    hand_center = (
-                        int(wrist_x_rel * actual_width),
-                        int(wrist_y_rel * actual_height)
-                    )
+                # Очищаем данные о руках
+                new_hand_data = {
+                    'left': {'landmarks': None, 'center': None, 'target_pos': None, 'handedness': None},
+                    'right': {'landmarks': None, 'center': None, 'target_pos': None, 'handedness': None}
+                }
 
-                    # ПЕРЕМЕЩАЕМ КУРСОР
+                # Обрабатываем все обнаруженные руки
+                if detection_result.hand_landmarks and detection_result.handedness:
+                    for hand_landmarks, handedness_info in zip(detection_result.hand_landmarks,
+                                                               detection_result.handedness):
+                        # Определяем тип руки (Left или Right)
+                        hand_type = handedness_info[0].category_name.lower()  # 'left' или 'right'
 
-                    smoothed_pos = self.apply_smoothing(target_pos[0], target_pos[1])
-                    win32api.SetCursorPos((int(smoothed_pos[0]), int(smoothed_pos[1])))
+                        # ИНВЕРТИРУЕМ ДЛЯ ЗЕРКАЛЬНОГО ОТОБРАЖЕНИЯ
 
+                        if hand_type == 'left':
+                            hand_type = 'right'
+                        else:
+                            hand_type = 'left'
+
+                        confidence = handedness_info[0].score
+
+                        # Вычисляем границы зоны отслеживания
+                        zone_width = actual_width * zone_width_percent
+                        zone_height = actual_height * zone_height_percent
+
+                        # Вычисляем отступы (расстояние от края кадра до зоны отслеживания)
+                        offset_x = ((actual_width - zone_width) / 100.0) * SENSITIVITY_ZONE_X
+                        offset_y = ((actual_height - zone_height) / 100.0) * SENSITIVITY_ZONE_Y
+
+                        # Нормализуем границы в диапазон [0, 1] для интерполяции
+                        x_min = offset_x / actual_width
+                        x_max = (offset_x + zone_width) / actual_width
+                        y_min = offset_y / actual_height
+                        y_max = (offset_y + zone_height) / actual_height
+
+                        # Получаем координаты запястья (точка 17)
+                        wrist_x_rel = hand_landmarks[17].x
+                        wrist_y_rel = hand_landmarks[17].y
+
+                        # Вычисляем координаты на экране с использованием динамических границ
+                        screen_x = np.interp(wrist_x_rel, (x_min, x_max), (0, self.screen_width))
+                        screen_y = np.interp(wrist_y_rel, (y_min, y_max), (0, self.screen_height))
+
+                        # Ограничиваем значения в допустимых пределах
+                        screen_x = np.clip(screen_x, 0, self.screen_width)
+                        screen_y = np.clip(screen_y, 0, self.screen_height)
+
+                        target_pos = (screen_x, screen_y)
+
+                        hand_center = (
+                            int(wrist_x_rel * actual_width),
+                            int(wrist_y_rel * actual_height)
+                        )
+
+                        # Сохраняем данные для этой руки
+                        new_hand_data[hand_type] = {
+                            'landmarks': hand_landmarks,
+                            'center': hand_center,
+                            'target_pos': target_pos,
+                            'handedness': hand_type,
+                            'confidence': confidence
+                        }
+
+                # Обновляем данные о руках
                 with self.data_lock:
-                    self.hand_data = {'landmarks': hand_landmarks, 'center': hand_center, 'target_pos': target_pos}
+                    self.hand_data = new_hand_data
 
+                # --- Логика выбора активной руки для управления курсором ---
+                current_time = time.time()
+
+                # Определяем, какая рука должна управлять курсором
+                if CONTROL_HAND == 'left':
+                    # Всегда используем левую руку, если она обнаружена
+                    if self.hand_data['left']['landmarks'] is not None:
+                        if not self.active_hand_detected or self.active_hand != 'left':
+                            self.active_hand = 'left'
+                            self.active_hand_detected = True
+
+                    elif self.active_hand == 'left':
+                        self.active_hand_detected = False
+
+
+                else:
+                    # Всегда используем правую руку, если она обнаружена
+                    if self.hand_data['right']['landmarks'] is not None:
+                        if not self.active_hand_detected or self.active_hand != 'right':
+                            self.active_hand = 'right'
+                            self.active_hand_detected = True
+
+                    elif self.active_hand == 'right':
+                        self.active_hand_detected = False
+
+                # --- Управление курсором от активной руки ---
+                if self.active_hand_detected and self.active_hand is not None:
+                    hand_info = self.hand_data.get(self.active_hand, {})
+                    target_pos = hand_info.get('target_pos')
+
+                    if target_pos is not None:
+                        # ПЕРЕМЕЩАЕМ КУРСОР от активной руки
+                        smoothed_pos = self.apply_smoothing(target_pos[0], target_pos[1])
+                        win32api.SetCursorPos((int(smoothed_pos[0]), int(smoothed_pos[1])))
 
             else:
                 time.sleep(0.001)
 
-
-
     def apply_smoothing(self, target_x, target_y):
         """Применяет сглаживание к координатам курсора"""
         if self.smoothed_x is None or self.smoothed_y is None:
-            # Первое значение - без сглаживания
             self.smoothed_x = target_x
             self.smoothed_y = target_y
         else:
-            # Экспоненциальное сглаживание с корректной скоростью
             self.smoothed_x = self.smoothed_x + self.smoothing_speed * (target_x - self.smoothed_x)
             self.smoothed_y = self.smoothed_y + self.smoothing_speed * (target_y - self.smoothed_y)
-
         return (self.smoothed_x, self.smoothed_y)
 
     def gesture_thread(self):
-
+        """Поток распознавания жестов - получает точки ОБЕИХ рук"""
         while self.running:
-            landmarks, target_pos = None, None
-            with self.data_lock:
-                if 'landmarks' in self.hand_data:
-                    landmarks = self.hand_data['landmarks']
-                target_pos = self.hand_data.get('target_pos')
+            # Собираем точки обеих рук в словарь
+            landmarks_dict = {'left': None, 'right': None}
+            target_pos = None
 
-            if landmarks and target_pos:
-                self.gesture_recognizer.recognize_and_execute(landmarks,target_pos)
+            with self.data_lock:
+                # Берем точки левой руки (если есть)
+                if self.hand_data['left']['landmarks'] is not None:
+                    landmarks_dict['left'] = self.hand_data['left']['landmarks']
+                    # Для одноручных жестов используем позицию активной руки
+                    if self.active_hand == 'left':
+                        target_pos = self.hand_data['left'].get('target_pos')
+
+                # Берем точки правой руки (если есть)
+                if self.hand_data['right']['landmarks'] is not None:
+                    landmarks_dict['right'] = self.hand_data['right']['landmarks']
+                    if self.active_hand == 'right':
+                        target_pos = self.hand_data['right'].get('target_pos')
+
+                # Если нет активной руки, но есть хоть одна рука - берем ее позицию
+                # if target_pos is None:
+                #     if landmarks_dict['left'] is not None:
+                #         target_pos = self.hand_data['left'].get('target_pos')
+                #     elif landmarks_dict['right'] is not None:
+                #         target_pos = self.hand_data['right'].get('target_pos')
+
+            # Передаем словарь с точками обеих рук в recognizer
+            self.gesture_recognizer.recognize_and_execute(landmarks_dict, target_pos)
 
             time.sleep(0.01)
 
     def display_thread(self):
+        """Поток отображения - показывает обе руки"""
         print("Запуск основного потока отображения...")
         camera_window_name = "Camera Feed"
 
@@ -186,8 +289,11 @@ class AdvancedCursorController:
         while self.running:
             with self.frame_lock:
                 frame = self.current_frame.copy() if self.current_frame is not None else None
+
             with self.data_lock:
-                hand_center = self.hand_data.get('center')
+                left_center = self.hand_data['left'].get('center')
+                right_center = self.hand_data['right'].get('center')
+                active_hand = self.active_hand
 
             self.frame_count += 1
             if time.time() - self.last_fps_time >= 1.0:
@@ -196,24 +302,34 @@ class AdvancedCursorController:
                 self.last_fps_time = time.time()
 
             if frame is not None:
-                if hand_center:
-                    cv2.circle(frame, hand_center, 7, (0, 255, 0), cv2.FILLED)
+                # Рисуем бирюзовый прямоугольник зоны отслеживания
+                height, width = frame.shape[:2]
 
-                mode_text = "Mode: "
-                if self.is_dragging:
-                    mode_text += "DRAGGING"
-                elif self.drag_start_time is not None:
-                    hold_progress = min(1.0, (time.time() - self.drag_start_time) / HOLD_THRESHOLD)
-                    mode_text += f"HOLDING {int(hold_progress * 100)}%"
-                else:
-                    mode_text += "READY"
+                # Вычисляем размеры зоны отслеживания
+                zone_width = width * (SENSITIVITY_ZONE_PERCENT / 100.0)
+                zone_height = height * (SENSITIVITY_ZONE_PERCENT / 100.0)
 
-                cv2.putText(frame, mode_text, (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                # Вычисляем отступы (расстояние от края кадра до зоны отслеживания)
+                offset_x = ((width - zone_width) / 100.0) * SENSITIVITY_ZONE_X
+                offset_y = ((height - zone_height) / 100.0) * SENSITIVITY_ZONE_Y
+
+                # Вычисляем координаты прямоугольника
+                rect_x1 = int(offset_x)
+                rect_y1 = int(offset_y)
+                rect_x2 = int(offset_x + zone_width)
+                rect_y2 = int(offset_y + zone_height)
+
+                cv2.rectangle(frame, (rect_x1, rect_y1), (rect_x2, rect_y2), (255, 255, 0), 2)
+
+                # Отображаем активную руку для управления курсором (обводим желтым)
+                if active_hand == 'left' and left_center:
+                    cv2.circle(frame, left_center, 7, (0, 255, 0), cv2.FILLED)
+                elif active_hand == 'right' and right_center:
+                    cv2.circle(frame, right_center, 7, (0, 255, 0), cv2.FILLED)
+
                 cv2.putText(frame, f"FPS: {self.fps}", (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-                cv2.putText(frame, f"Smoothing: {SMOOTHING_LEVEL}", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-                            (255, 255, 255), 1)
-                cv2.putText(frame, "Left: Index+Thumb", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-                cv2.putText(frame, "Right: Ring+Thumb", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+                cv2.putText(frame, f"Control hand: {self.active_hand.upper() if self.active_hand else 'NONE'}",
+                            (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
 
                 cv2.imshow(camera_window_name, frame)
 
@@ -226,20 +342,14 @@ class AdvancedCursorController:
     def run(self):
         if not self.running: return
         print("Запуск программы...")
-        print("Управление:")
-        print("  - Указательный + большой пальцы: левый клик (короткое смыкание) или drag & drop (удержание)")
-        print("  - Безымянный + большой пальцы: правый клик")
-        print(f"  - Время удержания для drag & drop: {HOLD_THRESHOLD}с")
-        print(f"  - Уровень сглаживания: {SMOOTHING_LEVEL} (0.0 - без сглаживания, 1.0 - максимальное)")
-        print("  - Нажмите 'q' для выхода")
 
         try:
             capture_t = threading.Thread(target=self.capture_thread, daemon=True)
             tracking_t = threading.Thread(target=self.tracking_thread, daemon=True)
-            click_t = threading.Thread(target=self.gesture_thread, daemon=True)
+            gesture_t = threading.Thread(target=self.gesture_thread, daemon=True)
             capture_t.start()
             tracking_t.start()
-            click_t.start()
+            gesture_t.start()
             self.display_thread()
         except Exception as e:
             print(f"Произошла критическая ошибка: {e}")
