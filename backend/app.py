@@ -104,19 +104,6 @@ class AdvancedCursorController:
         self.last_active_hand_update = time.time()
 
 
-    def preprocess_frame(self, frame):
-        """Лёгкая предобработка для улучшения распознавания"""
-        # Только если освещение плохое
-
-        # CLAHE - адаптивная коррекция контраста
-        lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
-        l, a, b = cv2.split(lab)
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-        l = clahe.apply(l)
-        enhanced = cv2.merge([l, a, b])
-        return cv2.cvtColor(enhanced, cv2.COLOR_LAB2BGR)
-
-
     def capture_thread(self):
         """Поток захвата видео"""
         print("Запуск потока захвата...")
@@ -124,7 +111,6 @@ class AdvancedCursorController:
             success, frame = self.cap.read()
             if success:
                 frame = cv2.flip(frame, 1)
-                frame = self.preprocess_frame(frame)  # Добавить эту строку
                 with self.frame_lock:
                     self.current_frame = frame
             time.sleep(0.001)
