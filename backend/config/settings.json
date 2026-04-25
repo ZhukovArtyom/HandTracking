@@ -8,13 +8,14 @@
   },
   "cursor": {
     "sensitivity_zone_percent": 50,
-    "sensitivity_zone_X": 85,
-    "sensitivity_zone_Y": 60,
-    "smoothing_level": 0.5,
+    "sensitivity_zone_X": 70,
+    "sensitivity_zone_Y": 40,
+    "padding": 30,
+    "smoothing_level": 0.4,
     "control_hand": "right"
   },
   "gestures": {
-    "click_distance_threshold": 0.05,
+    "click_distance_threshold": 0.036,
     "activation_delay": 0
 
   }

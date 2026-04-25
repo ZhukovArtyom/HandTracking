@@ -9,8 +9,10 @@ import subprocess
 
 from config_loader import config
 
-CLICK_DISTANCE_THRESHOLD = config.get('gestures.click_distance_threshold')
+SENSITIVITY_ZONE_PERCENT = config.get('cursor.sensitivity_zone_percent')
+CLICK_DISTANCE_THRESHOLD = config.get('gestures.click_distance_threshold') / 100 * SENSITIVITY_ZONE_PERCENT
 ACTIVATION_DELAY = config.get('gestures.activation_delay')
+
 
 CONTROL_HAND = config.get('cursor.control_hand')
 SECOND_HAND = "left" if CONTROL_HAND == "right" else "right"
@@ -49,7 +51,7 @@ class GestureRecognizer:
 
     def calculate_distance(self, point1, point2):
         """Вычисляет расстояние между двумя точками"""
-        return np.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2)
+        return np.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2) / 100 * SENSITIVITY_ZONE_PERCENT
 
     def check_point_group(self, landmarks_dict, point_group):
         """

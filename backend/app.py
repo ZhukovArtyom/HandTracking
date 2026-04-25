@@ -6,7 +6,6 @@ import threading
 import pyautogui
 import psutil
 import os
-import winreg
 
 # --- Импорты для управления курсором (Windows) ---
 import win32api
@@ -26,6 +25,8 @@ MODEL_PATH = config.get('model.path')
 SENSITIVITY_ZONE_PERCENT = config.get('cursor.sensitivity_zone_percent')
 SENSITIVITY_ZONE_X = config.get('cursor.sensitivity_zone_X')
 SENSITIVITY_ZONE_Y = config.get('cursor.sensitivity_zone_Y')
+
+PADDING = config.get('cursor.padding')
 
 CLICK_DISTANCE_THRESHOLD = config.get('gestures.click_distance_threshold')
 
@@ -86,6 +87,8 @@ class AdvancedCursorController:
         print(f"Разрешение экрана: {self.screen_width}x{self.screen_height}")
 
         self.cap = cv2.VideoCapture(0)
+        # Проверить все возможные индексы камер
+
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, CAMERA_WIDTH)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT)
         self.current_frame = None
@@ -101,6 +104,18 @@ class AdvancedCursorController:
         self.last_active_hand_update = time.time()
 
 
+    def preprocess_frame(self, frame):
+        """Лёгкая предобработка для улучшения распознавания"""
+        # Только если освещение плохое
+
+        # CLAHE - адаптивная коррекция контраста
+        lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
+        l, a, b = cv2.split(lab)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        l = clahe.apply(l)
+        enhanced = cv2.merge([l, a, b])
+        return cv2.cvtColor(enhanced, cv2.COLOR_LAB2BGR)
+
 
     def capture_thread(self):
         """Поток захвата видео"""
@@ -108,9 +123,12 @@ class AdvancedCursorController:
         while self.running:
             success, frame = self.cap.read()
             if success:
+                frame = cv2.flip(frame, 1)
+                frame = self.preprocess_frame(frame)  # Добавить эту строку
                 with self.frame_lock:
-                    self.current_frame = cv2.flip(frame, 1)
+                    self.current_frame = frame
             time.sleep(0.001)
+
 
     def tracking_thread(self):
         """Поток отслеживания рук (обеих)"""
@@ -126,6 +144,7 @@ class AdvancedCursorController:
                 if self.current_frame is not None:
                     frame_to_process = self.current_frame.copy()
                     actual_height, actual_width = frame_to_process.shape[:2]
+
 
             if frame_to_process is not None:
                 image_rgb = cv2.cvtColor(frame_to_process, cv2.COLOR_BGR2RGB)
@@ -154,13 +173,17 @@ class AdvancedCursorController:
 
                         confidence = handedness_info[0].score
 
+                        # Вычисляем доступное пространство с учетом отступов 10 пикселей
+                        available_width = actual_width - PADDING  # 10 слева + 10 справа
+                        available_height = actual_height - PADDING  # 10 сверху + 10 снизу
+
                         # Вычисляем границы зоны отслеживания
-                        zone_width = actual_width * zone_width_percent
-                        zone_height = actual_height * zone_height_percent
+                        zone_width = available_width * zone_width_percent
+                        zone_height = available_height * zone_height_percent
 
                         # Вычисляем отступы (расстояние от края кадра до зоны отслеживания)
-                        offset_x = ((actual_width - zone_width) / 100.0) * SENSITIVITY_ZONE_X
-                        offset_y = ((actual_height - zone_height) / 100.0) * SENSITIVITY_ZONE_Y
+                        offset_x = PADDING/2 + ((available_width - zone_width) / 100.0) * SENSITIVITY_ZONE_X
+                        offset_y = PADDING/2 + ((available_height - zone_height) / 100.0) * SENSITIVITY_ZONE_Y
 
                         # Нормализуем границы в диапазон [0, 1] для интерполяции
                         x_min = offset_x / actual_width
@@ -297,13 +320,16 @@ class AdvancedCursorController:
                 # Рисуем бирюзовый прямоугольник зоны отслеживания
                 height, width = frame.shape[:2]
 
-                # Вычисляем размеры зоны отслеживания
-                zone_width = width * (SENSITIVITY_ZONE_PERCENT / 100.0)
-                zone_height = height * (SENSITIVITY_ZONE_PERCENT / 100.0)
+                # Вычисляем доступное пространство с учетом отступов 10 пикселей
+                available_width = width - PADDING
+                available_height = height - PADDING
 
-                # Вычисляем отступы (расстояние от края кадра до зоны отслеживания)
-                offset_x = ((width - zone_width) / 100.0) * SENSITIVITY_ZONE_X
-                offset_y = ((height - zone_height) / 100.0) * SENSITIVITY_ZONE_Y
+                # Вычисляем размеры зоны отслеживания
+                zone_width = available_width * (SENSITIVITY_ZONE_PERCENT / 100.0)
+                zone_height = available_height * (SENSITIVITY_ZONE_PERCENT / 100.0)
+
+                offset_x = PADDING/2 + ((available_width - zone_width) / 100.0) * SENSITIVITY_ZONE_X
+                offset_y = PADDING/2 + ((available_height - zone_height) / 100.0) * SENSITIVITY_ZONE_Y
 
                 # Вычисляем координаты прямоугольника
                 rect_x1 = int(offset_x)
