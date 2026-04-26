@@ -337,9 +337,6 @@ class AdvancedCursorController:
 
                 cv2.imshow(camera_window_name, frame)
 
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                self.running = False
-                break
             if frame is None:
                 time.sleep(0.01)
 
