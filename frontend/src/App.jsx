@@ -81,78 +81,55 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-2xl p-8">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-800">
-            🖐️ Hand Tracking Control
-          </h1>
-          <div className={`px-4 py-2 rounded-full font-semibold text-sm ${
-            pythonRunning
-              ? 'bg-green-100 text-green-700 border border-green-300'
-              : 'bg-red-100 text-red-700 border border-red-300'
-          }`}>
-            {pythonRunning ? '🟢 Python: RUNNING' : '🔴 Python: STOPPED'}
-          </div>
-        </div>
 
-        {/* Controls */}
-        <div className="flex justify-center my-8">
-          {!apiReady ? (
-            <button disabled className="px-8 py-3 bg-gray-400 text-white font-bold rounded-lg cursor-not-allowed">
-              ⏳ Loading...
-            </button>
-          ) : !pythonRunning ? (
-            <button
-              onClick={startPython}
-              className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-all hover:scale-105 hover:shadow-lg"
-            >
-              ▶ START TRACKING
-            </button>
-          ) : (
-            <button
-              onClick={stopPython}
-              className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-all hover:scale-105 hover:shadow-lg"
-            >
-              ⏹️ STOP TRACKING
-            </button>
-          )}
-        </div>
-
-        {/* Log Panel */}
-        <div className="bg-gray-50 rounded-lg p-5 my-5 border border-gray-200">
-          <h3 className="text-gray-700 font-semibold mb-3">📋 Log</h3>
-          <div
-            ref={logContainerRef}
-            className="bg-gray-900 text-gray-300 rounded-md p-3 h-80 overflow-y-auto font-mono text-xs"
-          >
-            {logs.length === 0 ? (
-              <div className="text-gray-500 text-center py-8 italic">
-                No logs yet. Click START to begin...
-              </div>
-            ) : (
-              logs.map((log, index) => (
-                <div key={index} className="py-1 border-b border-gray-800">
-                  {log}
+    <div className="h-screen w-full bg-white">
+      <div class="w-full h-6/100 bg-white border-b-2 border-gray-300">
+        Шапка
+      </div>
+      <div class="w-full h-5/10 bg-white flex">
+        <div class="w-6/10 bg-red-200 mt-5 ml-5 mb-5">
+            <div class="relative w-full h-9/10 bg-blue-200">
+                <div class="absolute inset-0 bg-gray-500 rounded-xl mb-5">
+                    Камера
                 </div>
-              ))
-            )}
-          </div>
-        </div>
+                <div class="absolute inset-0 mt-3 ml-3 mr-3 mb-8 grid grid-rows-[32px_10fr] grid-cols-[32px_10fr] gap-1">
+                  <div class="bg-red-200"></div>
+                  <div>
+                    <div class="h-full bg-white/50 px-2 rounded-xl">
+                        <input type="range" class="h-full w-full"/>
+                    </div>
 
-        {/* Info Panel */}
-        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded mt-5">
-          <p className="text-blue-800 text-sm mb-1">
-            💡 Tip: When tracking is active, use your hand to control the mouse cursor
-          </p>
-          <p className="text-blue-800 text-sm mb-1">
-            🖱️ Gestures: Index+Thumb = Left Click | Ring+Thumb = Right Click
-          </p>
-          <p className="text-blue-800 text-sm">
-            🎮 Hold Index+Thumb for Drag & Drop
-          </p>
+
+                  </div>
+                  <div class="w-50 h-full place-self-center flex">
+                      <div class="h-full w-[32px] bg-white/50 rounded-xl">
+                        <input type="range" class="h-full w-full rotate-270"/>
+                    </div>
+
+                  </div>
+                  <div class="bg-orange-200 p-4">
+                      область отслеживания
+                  </div>
+                </div>
+            </div>
+            <div class="w-full h-1/10 bg-green-200 flex">
+                <button class="w-2/3 bg-blue-500 text-white px-4 py-2 rounded-xl">
+                  Нажми меня
+                </button>
+                <button class="w-1/3 bg-white text-blue-500 border-2 px-4 py-2 rounded-xl ml-3">
+                  Нажми меня
+                </button>
+            </div>
         </div>
+        <div class="w-4/10 bg-white rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)] m-5">
+            Правый блок
+        </div>
+      </div>
+      <div class="w-full h-4/10 bg-green-200">
+        Нижний блок — 1/3 высоты
+      </div>
+      <div class="w-full h-4/100 bg-red-500">
+        Подвал
       </div>
     </div>
   )
