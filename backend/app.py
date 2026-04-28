@@ -7,6 +7,10 @@ import pyautogui
 import psutil
 import os
 
+import json
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+
 # --- Импорты для управления курсором (Windows) ---
 import win32api
 import win32con
@@ -102,7 +106,69 @@ class AdvancedCursorController:
         self.active_hand = None  # 'left' или 'right'
         self.active_hand_detected = False
         self.last_active_hand_update = time.time()
+        self.setup_config_watcher()
 
+    def setup_config_watcher(self):
+        """Настраивает отслеживание изменений настроек"""
+
+        class SettingsHandler(FileSystemEventHandler):
+            def __init__(self, controller):
+                self.controller = controller
+
+            def on_modified(self, event):
+                if event.src_path.endswith('settings.json'):
+                    print("Detected settings.json change")
+                    self.controller.reload_settings()
+
+        # Определяем путь к файлу настроек
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        settings_path = os.path.join(script_dir, 'config', 'settings.json')
+        config_dir = os.path.dirname(settings_path)
+
+        if os.path.exists(config_dir):
+            self.config_observer = Observer()
+            event_handler = SettingsHandler(self)
+            self.config_observer.schedule(event_handler, path=config_dir, recursive=False)
+            self.config_observer.start()
+            print(f"Watching for config changes in: {config_dir}")
+
+    def reload_settings(self):
+        """Перезагружает настройки и обновляет переменные в реальном времени"""
+        global SENSITIVITY_ZONE_PERCENT, SENSITIVITY_ZONE_X, SENSITIVITY_ZONE_Y
+        global PADDING, CLICK_DISTANCE_THRESHOLD, SMOOTHING_LEVEL, CONTROL_HAND, ACTIVATION_DELAY
+
+        # Перезагружаем конфиг
+        config.reload()
+
+        # Обновляем глобальные переменные
+        with self.lock:  # Используйте существующий lock или создайте новый
+            SENSITIVITY_ZONE_PERCENT = config.get('cursor.sensitivity_zone_percent', SENSITIVITY_ZONE_PERCENT)
+            SENSITIVITY_ZONE_X = config.get('cursor.sensitivity_zone_X', SENSITIVITY_ZONE_X)
+            SENSITIVITY_ZONE_Y = config.get('cursor.sensitivity_zone_Y', SENSITIVITY_ZONE_Y)
+            PADDING = config.get('cursor.padding', PADDING)
+
+            # Обновляем порог клика
+            new_threshold = config.get('gestures.click_distance_threshold', 0.036)
+            CLICK_DISTANCE_THRESHOLD = new_threshold / 100 * SENSITIVITY_ZONE_PERCENT
+
+            # Обновляем сглаживание
+            SMOOTHING_LEVEL = config.get('cursor.smoothing_level', SMOOTHING_LEVEL)
+            self.smoothing_speed = max(0.01, 1.0 - SMOOTHING_LEVEL)
+
+            # Обновляем контрольную руку
+            CONTROL_HAND = config.get('cursor.control_hand', CONTROL_HAND)
+
+            # Обновляем задержку активации жестов
+            ACTIVATION_DELAY = config.get('gestures.activation_delay', ACTIVATION_DELAY)
+
+            # Обновляем gesture_recognizer
+            if hasattr(self, 'gesture_recognizer'):
+                self.gesture_recognizer.update_activation_delay(ACTIVATION_DELAY)
+                self.gesture_recognizer.update_click_threshold(CLICK_DISTANCE_THRESHOLD)
+
+        print(f"Settings reloaded: sensitivity_zone={SENSITIVITY_ZONE_PERCENT}%, "
+              f"smoothing={SMOOTHING_LEVEL}, control_hand={CONTROL_HAND}, "
+              f"activation_delay={ACTIVATION_DELAY}s")
 
     def capture_thread(self):
         """Поток захвата видео"""
@@ -337,6 +403,9 @@ class AdvancedCursorController:
 
                 cv2.imshow(camera_window_name, frame)
 
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                self.running = False
+                break
             if frame is None:
                 time.sleep(0.01)
 
@@ -361,6 +430,16 @@ class AdvancedCursorController:
     def stop(self):
         print("Остановка программы...")
         self.running = False
+
+        # Останавливаем watcher
+        if hasattr(self, 'config_observer'):
+            self.config_observer.stop()
+            self.config_observer.join()
+
+        # Останавливаем простой перезагрузчик
+        if hasattr(self, 'config_reloader'):
+            self.config_reloader.stop()
+
         time.sleep(0.5)
         if hasattr(self, 'landmarker'):
             self.landmarker.close()

@@ -1,107 +1,105 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
-import { spawn } from 'child_process'
-import path from 'path'
-import { fileURLToPath } from 'url'
-import fs from 'fs'
+const { app, BrowserWindow, ipcMain } = require('electron')
+const fs = require('fs')
+const path = require('path')
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
-
-let mainWindow = null
-let pythonProcess = null
-
-function getBackendPath() {
-  if (isDev) {
-    return path.join(__dirname, '..', 'backend')
-  } else {
-    return path.join(process.resourcesPath, 'backend')
-  }
-}
+let mainWindow
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 900,
-    height: 700,
+    width: 1200,
+    height: 800,
     webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
-      contextIsolation: true,
-      preload: 'C:\\Users\\Артем\\Desktop\\HandTracking\\frontend\\preload.js'
-    },
-    title: 'Hand Tracking Control'
+      contextIsolation: true
+    }
   })
 
-  if (isDev) {
+  if (process.env.NODE_ENV === 'development') {
     mainWindow.loadURL('http://localhost:5173')
     mainWindow.webContents.openDevTools()
   } else {
-    mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'))
+    mainWindow.loadFile('dist/index.html')
   }
 }
 
-function startPythonScript() {
-  if (pythonProcess) return
-
-  const backendPath = getBackendPath()
-  const scriptPath = path.join(backendPath, 'app.py')
-
-  if (!fs.existsSync(scriptPath)) {
-    console.error('app.py not found at:', scriptPath)
-    mainWindow?.webContents.send('python-error', 'app.py not found')
-    return
-  }
-
-  pythonProcess = spawn('python', [scriptPath], {
-    cwd: backendPath,
-    stdio: ['pipe', 'pipe', 'pipe']
-  })
-
-  pythonProcess.stdout.on('data', (data) => {
-    const log = data.toString()
-    console.log(`Python: ${log}`)
-    mainWindow?.webContents.send('python-log', log)
-  })
-
-  pythonProcess.stderr.on('data', (data) => {
-    const error = data.toString()
-    console.error(`Python error: ${error}`)
-    mainWindow?.webContents.send('python-log', `ERROR: ${error}`)
-  })
-
-  pythonProcess.on('close', () => {
-    pythonProcess = null
-    mainWindow?.webContents.send('python-status', 'stopped')
-  })
-
-  mainWindow?.webContents.send('python-status', 'running')
-  mainWindow?.webContents.send('python-log', 'Python process started')
+// Получение пути к settings.json
+function getSettingsPath() {
+  const projectRoot = path.join(__dirname, '..')
+  return path.join(projectRoot, 'backend', 'config', 'settings.json')
 }
 
-function stopPythonScript() {
-  if (pythonProcess) {
-    pythonProcess.kill()
-    pythonProcess = null
-    mainWindow?.webContents.send('python-status', 'stopped')
-  }
-}
+// Чтение настроек
+ipcMain.handle('read-settings', async () => {
+  try {
+    const settingsPath = getSettingsPath()
+    console.log('Reading settings from:', settingsPath)
 
-// IPC handlers
-ipcMain.handle('start-python', () => {
-  startPythonScript()
-  return true
+    if (fs.existsSync(settingsPath)) {
+      const data = fs.readFileSync(settingsPath, 'utf8')
+      return JSON.parse(data)
+    } else {
+      console.error('Settings file not found')
+      return null
+    }
+  } catch (error) {
+    console.error('Error reading settings:', error)
+    return null
+  }
 })
 
-ipcMain.handle('stop-python', () => {
-  stopPythonScript()
-  return true
+// Сохранение настроек
+ipcMain.handle('save-settings', async (event, newSettings) => {
+  try {
+    const settingsPath = getSettingsPath()
+
+    // Читаем текущие настройки
+    let currentSettings = {}
+    if (fs.existsSync(settingsPath)) {
+      const data = fs.readFileSync(settingsPath, 'utf8')
+      currentSettings = JSON.parse(data)
+    }
+
+    // Объединяем с новыми настройками
+    const mergedSettings = { ...currentSettings, ...newSettings }
+
+    // Сохраняем в файл
+    fs.writeFileSync(settingsPath, JSON.stringify(mergedSettings, null, 2), 'utf8')
+    console.log('Settings saved successfully')
+
+    // Отправляем уведомление Python процессу (если запущен)
+    if (mainWindow) {
+      mainWindow.webContents.send('settings-changed', mergedSettings)
+    }
+
+    return mergedSettings
+  } catch (error) {
+    console.error('Error saving settings:', error)
+    return null
+  }
 })
 
-ipcMain.handle('get-python-status', () => {
-  return pythonProcess !== null
+ipcMain.handle('start-python', async () => {
+  console.log('start-python handler')
+
+  return { success: true }
+})
+
+ipcMain.handle('stop-python', async () => {
+  console.log('stop-python handler')
+
+  return { success: true }
+})
+
+ipcMain.handle('get-python-status', async () => {
+  console.log('get-python-status handler')
+  return false
 })
 
 app.whenReady().then(createWindow)
 
 app.on('window-all-closed', () => {
-  stopPythonScript()
-  if (process.platform !== 'darwin') app.quit()
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
 })

@@ -1,38 +1,32 @@
-
 const { contextBridge, ipcRenderer } = require('electron')
 
 console.log('Preload script started')
 
 const electronAPI = {
   startPython: () => {
-    console.log('startPython called, sending to main')
+    console.log('startPython called')
     return ipcRenderer.invoke('start-python')
   },
   stopPython: () => {
-    console.log('stopPython called, sending to main')
+    console.log('stopPython called')
     return ipcRenderer.invoke('stop-python')
   },
   getPythonStatus: () => {
-    console.log('getPythonStatus called, sending to main')
+    console.log('getPythonStatus called')
     return ipcRenderer.invoke('get-python-status')
   },
-  onPythonLog: (callback) => {
-    ipcRenderer.on('python-log', (event, data) => callback(data))
+  readSettings: () => {
+    console.log('readSettings called')
+    return ipcRenderer.invoke('read-settings')
   },
-  onPythonStatus: (callback) => {
-    ipcRenderer.on('python-status', (event, data) => callback(data))
+  saveSettings: (settings) => {
+    console.log('saveSettings called')
+    return ipcRenderer.invoke('save-settings', settings)
   },
-  onPythonError: (callback) => {
-    ipcRenderer.on('python-error', (event, data) => callback(data))
-  },
-  removeAllListeners: () => {
-    ipcRenderer.removeAllListeners('python-log')
-    ipcRenderer.removeAllListeners('python-status')
-    ipcRenderer.removeAllListeners('python-error')
+  onSettingsChanged: (callback) => {
+    ipcRenderer.on('settings-changed', (event, settings) => callback(settings))
   }
 }
 
-// Экспонируем API
 contextBridge.exposeInMainWorld('electronAPI', electronAPI)
-
 console.log('electronAPI exposed successfully')

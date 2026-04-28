@@ -34,6 +34,18 @@ class GestureRecognizer:
         # Загружаем жесты из файла
         self.load_gestures()
 
+    def update_activation_delay(self, new_delay):
+        """Обновляет задержку активации жестов"""
+        global ACTIVATION_DELAY
+        ACTIVATION_DELAY = new_delay
+        print(f"Activation delay updated to {ACTIVATION_DELAY}s")
+
+    def update_click_threshold(self, new_threshold):
+        """Обновляет порог расстояния для клика"""
+        global CLICK_DISTANCE_THRESHOLD
+        CLICK_DISTANCE_THRESHOLD = new_threshold
+        print(f"Click threshold updated to {CLICK_DISTANCE_THRESHOLD}")
+
     def load_gestures(self):
         """Загружает жесты из JSON файла"""
         try:
