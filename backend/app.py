@@ -33,6 +33,7 @@ SENSITIVITY_ZONE_Y = config.get('cursor.sensitivity_zone_Y')
 PADDING = config.get('cursor.padding')
 
 CLICK_DISTANCE_THRESHOLD = config.get('gestures.click_distance_threshold')
+ACTIVATION_DELAY = config.get('gestures.activation_delay')
 
 # --- НАСТРОЙКИ СГЛАЖИВАНИЯ КУРСОРА ---
 SMOOTHING_LEVEL = config.get('cursor.smoothing_level')
@@ -49,6 +50,8 @@ class AdvancedCursorController:
         self.running = True
         self.frame_lock = threading.Lock()
         self.data_lock = threading.Lock()
+        self.lock = threading.Lock()
+
         self.hand_data = {
             'left': {'landmarks': None, 'center': None, 'target_pos': None, 'handedness': None},
             'right': {'landmarks': None, 'center': None, 'target_pos': None, 'handedness': None}
@@ -181,14 +184,9 @@ class AdvancedCursorController:
                     self.current_frame = frame
             time.sleep(0.001)
 
-
     def tracking_thread(self):
         """Поток отслеживания рук (обеих)"""
         print("Запуск потока отслеживания...")
-
-        # Вычисляем размеры зоны отслеживания
-        zone_width_percent = SENSITIVITY_ZONE_PERCENT / 100.0
-        zone_height_percent = SENSITIVITY_ZONE_PERCENT / 100.0
 
         while self.running:
             frame_to_process = None
@@ -197,8 +195,32 @@ class AdvancedCursorController:
                     frame_to_process = self.current_frame.copy()
                     actual_height, actual_width = frame_to_process.shape[:2]
 
-
             if frame_to_process is not None:
+                # === БЕРЁМ АКТУАЛЬНЫЕ ЗНАЧЕНИЯ НАСТРОЕК ===
+                current_zone_percent = SENSITIVITY_ZONE_PERCENT
+                current_zone_x = SENSITIVITY_ZONE_X
+                current_zone_y = SENSITIVITY_ZONE_Y
+                current_padding = PADDING
+
+                # Вычисляем зону с актуальными значениями
+                zone_width_percent = current_zone_percent / 100.0
+                zone_height_percent = current_zone_percent / 100.0
+
+                available_width = actual_width - current_padding
+                available_height = actual_height - current_padding
+
+                zone_width = available_width * zone_width_percent
+                zone_height = available_height * zone_height_percent
+
+                offset_x = current_padding / 2 + ((available_width - zone_width) / 100.0) * current_zone_x
+                offset_y = current_padding / 2 + ((available_height - zone_height) / 100.0) * current_zone_y
+
+                x_min = offset_x / actual_width
+                x_max = (offset_x + zone_width) / actual_width
+                y_min = offset_y / actual_height
+                y_max = (offset_y + zone_height) / actual_height
+
+                # Обработка изображения
                 image_rgb = cv2.cvtColor(frame_to_process, cv2.COLOR_BGR2RGB)
                 mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image_rgb)
                 detection_result = self.landmarker.detect(mp_image)
@@ -213,10 +235,7 @@ class AdvancedCursorController:
                 if detection_result.hand_landmarks and detection_result.handedness:
                     for hand_landmarks, handedness_info in zip(detection_result.hand_landmarks,
                                                                detection_result.handedness):
-                        # Определяем тип руки (Left или Right)
-                        hand_type = handedness_info[0].category_name.lower()  # 'left' или 'right'
-
-                        # ИНВЕРТИРУЕМ ДЛЯ ЗЕРКАЛЬНОГО ОТОБРАЖЕНИЯ
+                        hand_type = handedness_info[0].category_name.lower()
 
                         if hand_type == 'left':
                             hand_type = 'right'
@@ -225,33 +244,12 @@ class AdvancedCursorController:
 
                         confidence = handedness_info[0].score
 
-                        # Вычисляем доступное пространство с учетом отступов 10 пикселей
-                        available_width = actual_width - PADDING  # 10 слева + 10 справа
-                        available_height = actual_height - PADDING  # 10 сверху + 10 снизу
-
-                        # Вычисляем границы зоны отслеживания
-                        zone_width = available_width * zone_width_percent
-                        zone_height = available_height * zone_height_percent
-
-                        # Вычисляем отступы (расстояние от края кадра до зоны отслеживания)
-                        offset_x = PADDING/2 + ((available_width - zone_width) / 100.0) * SENSITIVITY_ZONE_X
-                        offset_y = PADDING/2 + ((available_height - zone_height) / 100.0) * SENSITIVITY_ZONE_Y
-
-                        # Нормализуем границы в диапазон [0, 1] для интерполяции
-                        x_min = offset_x / actual_width
-                        x_max = (offset_x + zone_width) / actual_width
-                        y_min = offset_y / actual_height
-                        y_max = (offset_y + zone_height) / actual_height
-
-                        # Получаем координаты запястья (точка 17)
                         wrist_x_rel = hand_landmarks[17].x
                         wrist_y_rel = hand_landmarks[17].y
 
-                        # Вычисляем координаты на экране с использованием динамических границ
                         screen_x = np.interp(wrist_x_rel, (x_min, x_max), (0, self.screen_width))
                         screen_y = np.interp(wrist_y_rel, (y_min, y_max), (0, self.screen_height))
 
-                        # Ограничиваем значения в допустимых пределах
                         screen_x = np.clip(screen_x, 0, self.screen_width)
                         screen_y = np.clip(screen_y, 0, self.screen_height)
 
@@ -262,7 +260,6 @@ class AdvancedCursorController:
                             int(wrist_y_rel * actual_height)
                         )
 
-                        # Сохраняем данные для этой руки
                         new_hand_data[hand_type] = {
                             'landmarks': hand_landmarks,
                             'center': hand_center,
@@ -275,38 +272,28 @@ class AdvancedCursorController:
                 with self.data_lock:
                     self.hand_data = new_hand_data
 
-                # --- Логика выбора активной руки для управления курсором ---
-                current_time = time.time()
-
-                # Определяем, какая рука должна управлять курсором
+                # --- Логика выбора активной руки ---
                 if CONTROL_HAND == 'left':
-                    # Всегда используем левую руку, если она обнаружена
                     if self.hand_data['left']['landmarks'] is not None:
                         if not self.active_hand_detected or self.active_hand != 'left':
                             self.active_hand = 'left'
                             self.active_hand_detected = True
-
                     elif self.active_hand == 'left':
                         self.active_hand_detected = False
-
-
                 else:
-                    # Всегда используем правую руку, если она обнаружена
                     if self.hand_data['right']['landmarks'] is not None:
                         if not self.active_hand_detected or self.active_hand != 'right':
                             self.active_hand = 'right'
                             self.active_hand_detected = True
-
                     elif self.active_hand == 'right':
                         self.active_hand_detected = False
 
-                # --- Управление курсором от активной руки ---
+                # --- Управление курсором ---
                 if self.active_hand_detected and self.active_hand is not None:
                     hand_info = self.hand_data.get(self.active_hand, {})
                     target_pos = hand_info.get('target_pos')
 
                     if target_pos is not None:
-                        # ПЕРЕМЕЩАЕМ КУРСОР от активной руки
                         smoothed_pos = self.apply_smoothing(target_pos[0], target_pos[1])
                         win32api.SetCursorPos((int(smoothed_pos[0]), int(smoothed_pos[1])))
 

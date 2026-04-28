@@ -22,60 +22,75 @@ function App() {
   const [gestureSensitivity, setGestureSensitivity] = useState(50)
   const [activationDelay, setActivationDelay] = useState(0)
 
-  // Функция сохранения настроек
-  const saveSettings = async (updates) => {
-    if (!window.electronAPI?.saveSettings) return
+  const saveFullSettings = async (updates) => {
+      if (!window.electronAPI?.saveSettings) return
 
-    try {
-      const settings = await window.electronAPI.saveSettings(updates)
-      console.log('Saved:', updates)
-    } catch (error) {
-      console.error('Error saving settings:', error)
-    }
+      try {
+        // Получаем текущие настройки
+        const currentSettings = await window.electronAPI.readSettings()
+        if (!currentSettings) return
+
+        // Создаём копию
+        const newSettings = JSON.parse(JSON.stringify(currentSettings))
+
+        // Обновляем нужные поля
+        if (updates.cursor) {
+          newSettings.cursor = { ...newSettings.cursor, ...updates.cursor }
+        }
+        if (updates.gestures) {
+          newSettings.gestures = { ...newSettings.gestures, ...updates.gestures }
+        }
+
+        // Сохраняем
+        await window.electronAPI.saveSettings(newSettings)
+      } catch (error) {
+        console.error('Error saving settings:', error)
+      }
   }
 
-  // Обёртки для setState с автоматическим сохранением
+  // Использование:
   const handleTrackingSizeChange = (value) => {
     setTrackingSize(value)
-    saveSettings({
+    saveFullSettings({
       cursor: { sensitivity_zone_percent: value }
-    })
-  }
-
-  const handleSensitivityZoneXChange = (value) => {
-    setSensitivityZoneX(value)
-    saveSettings({
-      cursor: { sensitivity_zone_X: value }
-    })
-  }
-
-  const handleSensitivityZoneYChange = (value) => {
-    setSensitivityZoneY(value)
-    saveSettings({
-      cursor: { sensitivity_zone_Y: value }
     })
   }
 
   const handleSmoothingLevelChange = (value) => {
     setSmoothingLevel(value)
-    saveSettings({
+    saveFullSettings({
       cursor: { smoothing_level: value / 100 }
     })
   }
 
   const handleGestureSensitivityChange = (value) => {
     setGestureSensitivity(value)
-    saveSettings({
+    saveFullSettings({
       gestures: { click_distance_threshold: value / 1000 }
     })
   }
 
   const handleActivationDelayChange = (value) => {
     setActivationDelay(value)
-    saveSettings({
+    saveFullSettings({
       gestures: { activation_delay: value }
     })
   }
+
+  const handleSensitivityZoneXChange = (value) => {
+    setSensitivityZoneX(value)
+    saveFullSettings({
+      cursor: { sensitivity_zone_X: value }
+    })
+  }
+
+  const handleSensitivityZoneYChange = (value) => {
+      setSensitivityZoneY(value)
+      saveFullSettings({
+        cursor: { sensitivity_zone_Y: value }
+     })
+  }
+
 
   // Загрузка настроек при запуске
   useEffect(() => {

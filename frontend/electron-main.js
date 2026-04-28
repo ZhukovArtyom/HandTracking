@@ -2,7 +2,11 @@ const { app, BrowserWindow, ipcMain } = require('electron')
 const fs = require('fs')
 const path = require('path')
 
-let mainWindow
+const { spawn } = require('child_process')
+let pythonProcess = null
+let mainWindow = null
+
+
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -80,15 +84,69 @@ ipcMain.handle('save-settings', async (event, newSettings) => {
 })
 
 ipcMain.handle('start-python', async () => {
-  console.log('start-python handler')
+  if (pythonProcess) {
+    return { success: false, message: 'Python already running' }
+  }
 
+  // Путь к Python скрипту
+  const scriptPath = path.join(__dirname, '..', 'backend', 'app.py')
+  const backendDir = path.join(__dirname, '..', 'backend')
+
+  console.log('Script path:', scriptPath)
+  console.log('Working directory:', backendDir)
+
+  // Проверяем существование файла
+  if (!fs.existsSync(scriptPath)) {
+    console.error('Python script not found at:', scriptPath)
+    return { success: false, message: 'Python script not found' }
+  }
+
+  // Запускаем Python с правильной рабочей директорией
+  pythonProcess = spawn('python', [scriptPath], {
+    cwd: backendDir,  // ← КЛЮЧЕВОЕ: рабочая директория = папка backend
+    env: {
+      ...process.env,
+      PYTHONUNBUFFERED: '1',
+      PYTHONIOENCODING: 'utf-8'  // ← добавляем кодировку
+    }
+  })
+
+  pythonProcess.stdout.on('data', (data) => {
+    const output = data.toString('utf-8')  // ← явно указываем кодировку
+    console.log(`Python: ${output}`)
+    mainWindow?.webContents.send('python-log', output)
+  })
+
+  pythonProcess.stderr.on('data', (data) => {
+    const error = data.toString('utf-8')  // ← явно указываем кодировку
+    console.error(`Python error: ${error}`)
+    mainWindow?.webContents.send('python-error', error)
+  })
+
+  pythonProcess.on('close', (code) => {
+    console.log(`Python process exited with code ${code}`)
+    pythonProcess = null
+    mainWindow?.webContents.send('python-status', 'stopped')
+  })
+
+  pythonProcess.on('error', (err) => {
+    console.error(`Failed to start Python: ${err.message}`)
+    pythonProcess = null
+    mainWindow?.webContents.send('python-error', err.message)
+  })
+
+  mainWindow?.webContents.send('python-status', 'running')
   return { success: true }
 })
 
 ipcMain.handle('stop-python', async () => {
-  console.log('stop-python handler')
-
-  return { success: true }
+  if (pythonProcess) {
+    pythonProcess.kill()
+    pythonProcess = null
+    mainWindow?.webContents.send('python-status', 'stopped')
+    return { success: true }
+  }
+  return { success: false, message: 'Python not running' }
 })
 
 ipcMain.handle('get-python-status', async () => {
