@@ -1,12 +1,10 @@
 const { app, BrowserWindow, ipcMain } = require('electron')
 const fs = require('fs')
 const path = require('path')
-
 const { spawn } = require('child_process')
+
 let pythonProcess = null
 let mainWindow = null
-
-
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -27,13 +25,11 @@ function createWindow() {
   }
 }
 
-// Получение пути к settings.json
 function getSettingsPath() {
   const projectRoot = path.join(__dirname, '..')
   return path.join(projectRoot, 'backend', 'config', 'settings.json')
 }
 
-// Чтение настроек
 ipcMain.handle('read-settings', async () => {
   try {
     const settingsPath = getSettingsPath()
@@ -52,26 +48,20 @@ ipcMain.handle('read-settings', async () => {
   }
 })
 
-// Сохранение настроек
 ipcMain.handle('save-settings', async (event, newSettings) => {
   try {
     const settingsPath = getSettingsPath()
 
-    // Читаем текущие настройки
     let currentSettings = {}
     if (fs.existsSync(settingsPath)) {
       const data = fs.readFileSync(settingsPath, 'utf8')
       currentSettings = JSON.parse(data)
     }
 
-    // Объединяем с новыми настройками
     const mergedSettings = { ...currentSettings, ...newSettings }
-
-    // Сохраняем в файл
     fs.writeFileSync(settingsPath, JSON.stringify(mergedSettings, null, 2), 'utf8')
     console.log('Settings saved successfully')
 
-    // Отправляем уведомление Python процессу (если запущен)
     if (mainWindow) {
       mainWindow.webContents.send('settings-changed', mergedSettings)
     }
@@ -88,37 +78,42 @@ ipcMain.handle('start-python', async () => {
     return { success: false, message: 'Python already running' }
   }
 
-  // Путь к Python скрипту
   const scriptPath = path.join(__dirname, '..', 'backend', 'app.py')
   const backendDir = path.join(__dirname, '..', 'backend')
 
   console.log('Script path:', scriptPath)
   console.log('Working directory:', backendDir)
 
-  // Проверяем существование файла
   if (!fs.existsSync(scriptPath)) {
     console.error('Python script not found at:', scriptPath)
     return { success: false, message: 'Python script not found' }
   }
 
-  // Запускаем Python с правильной рабочей директорией
   pythonProcess = spawn('python', [scriptPath], {
-    cwd: backendDir,  // ← КЛЮЧЕВОЕ: рабочая директория = папка backend
+    cwd: backendDir,
     env: {
       ...process.env,
       PYTHONUNBUFFERED: '1',
-      PYTHONIOENCODING: 'utf-8'  // ← добавляем кодировку
+      PYTHONIOENCODING: 'utf-8'
     }
   })
 
+  // ЕДИНЫЙ ОБРАБОТЧИК stdout
   pythonProcess.stdout.on('data', (data) => {
-    const output = data.toString('utf-8')  // ← явно указываем кодировку
-    console.log(`Python: ${output}`)
-    mainWindow?.webContents.send('python-log', output)
+    const output = data.toString('utf-8')
+
+    // Проверяем, что это кадр (начинается с "FRAME:")
+    if (output.startsWith('FRAME:')) {
+      const frameData = output.substring(6)
+      mainWindow?.webContents.send('frame', frameData)
+    } else {
+      console.log(`Python: ${output}`)
+      mainWindow?.webContents.send('python-log', output)
+    }
   })
 
   pythonProcess.stderr.on('data', (data) => {
-    const error = data.toString('utf-8')  // ← явно указываем кодировку
+    const error = data.toString('utf-8')
     console.error(`Python error: ${error}`)
     mainWindow?.webContents.send('python-error', error)
   })
@@ -150,8 +145,7 @@ ipcMain.handle('stop-python', async () => {
 })
 
 ipcMain.handle('get-python-status', async () => {
-  console.log('get-python-status handler')
-  return false
+  return pythonProcess !== null
 })
 
 app.whenReady().then(createWindow)
@@ -159,5 +153,12 @@ app.whenReady().then(createWindow)
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
+  }
+})
+
+app.on('before-quit', () => {
+  if (pythonProcess) {
+    pythonProcess.kill()
+    pythonProcess = null
   }
 })

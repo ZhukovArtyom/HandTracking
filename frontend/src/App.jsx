@@ -23,6 +23,8 @@ function App() {
   const [activationDelay, setActivationDelay] = useState(0)
   const [controlHand, setControlHand] = useState('right') // Добавлен state для выбранной руки
 
+  const [currentFrame, setCurrentFrame] = useState(null)
+
   const saveFullSettings = async (updates) => {
       if (!window.electronAPI?.saveSettings) return
 
@@ -99,6 +101,15 @@ function App() {
         cursor: { sensitivity_zone_Y: 100-value }
      })
   }
+
+  // Получение кадра
+  useEffect(() => {
+    if (window.electronAPI?.onFrame) {
+      window.electronAPI.onFrame((frameData) => {
+        setCurrentFrame(`data:image/jpeg;base64,${frameData}`)
+      })
+    }
+  }, [])
 
   // Загрузка настроек при запуске
   useEffect(() => {
@@ -235,12 +246,22 @@ function App() {
       <div class="w-full bg-white flex">
         <div class="w-6/10 mt-5 ml-5 mb-5">
           <div class="relative w-full aspect-[4/3]">
-            <div class="absolute inset-0 bg-gray-500 rounded-xl mb-5">
-              Камера
+            <div class="absolute inset-0 bg-gray-500 rounded-xl mb-5 overflow-hidden">
+              {currentFrame ? (
+                <img
+                  src={currentFrame}
+                  alt="Camera feed"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div class="w-full h-full flex items-center justify-center text-white">
+                  Камера
+                </div>
+              )}
             </div>
 
             <div class="absolute inset-0 rounded-xl mb-5">
-              <div class="h-1/2 w-1/2 rounded-xl border-2 border-[rgb(6,207,249)]"></div>
+              <div id="sensetivity_zone" class="h-1/2 w-1/2 rounded-xl border-2 border-[rgb(6,207,249)]"></div>
             </div>
 
             <div class="absolute inset-0 mt-3 ml-3 mr-3 mb-8 grid grid-rows-[32px_10fr] grid-cols-[32px_10fr] gap-1">

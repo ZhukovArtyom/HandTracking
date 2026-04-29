@@ -6,6 +6,7 @@ import threading
 import pyautogui
 import psutil
 import os
+import base64
 
 import json
 from watchdog.observers import Observer
@@ -335,67 +336,44 @@ class AdvancedCursorController:
             time.sleep(0.01)
 
     def display_thread(self):
-        """Поток отображения - показывает обе руки"""
-        print("Запуск основного потока отображения...")
-        camera_window_name = "Camera Feed"
-
-        cv2.namedWindow(camera_window_name, cv2.WINDOW_AUTOSIZE)
+        """Поток отправки кадров в интерфейс (без создания окна)"""
+        print("Запуск потока отправки кадров...")
 
         while self.running:
             with self.frame_lock:
-                frame = self.current_frame.copy() if self.current_frame is not None else None
+                if self.current_frame is not None:
+                    frame = self.current_frame.copy()
 
-            with self.data_lock:
-                left_center = self.hand_data['left'].get('center')
-                right_center = self.hand_data['right'].get('center')
-                active_hand = self.active_hand
+                    # Рисуем на кадре все элементы
+                    height, width = frame.shape[:2]
 
-            self.frame_count += 1
-            if time.time() - self.last_fps_time >= 1.0:
-                self.fps = self.frame_count
-                self.frame_count = 0
-                self.last_fps_time = time.time()
+                    # Отображаем активную руку
+                    with self.data_lock:
+                        left_center = self.hand_data['left'].get('center')
+                        right_center = self.hand_data['right'].get('center')
+                        active_hand = self.active_hand
 
-            if frame is not None:
-                # Рисуем бирюзовый прямоугольник зоны отслеживания
-                height, width = frame.shape[:2]
+                    if active_hand == 'left' and left_center:
+                        cv2.circle(frame, left_center, 7, (0, 255, 0), cv2.FILLED)
+                    elif active_hand == 'right' and right_center:
+                        cv2.circle(frame, right_center, 7, (0, 255, 0), cv2.FILLED)
 
-                # Вычисляем доступное пространство с учетом отступов 10 пикселей
-                available_width = width - PADDING
-                available_height = height - PADDING
+                    # Добавляем текст
+                    cv2.putText(frame, f"FPS: {self.fps}", (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
-                # Вычисляем размеры зоны отслеживания
-                zone_width = available_width * (SENSITIVITY_ZONE_PERCENT / 100.0)
-                zone_height = available_height * (SENSITIVITY_ZONE_PERCENT / 100.0)
 
-                offset_x = PADDING/2 + ((available_width - zone_width) / 100.0) * SENSITIVITY_ZONE_X
-                offset_y = PADDING/2 + ((available_height - zone_height) / 100.0) * SENSITIVITY_ZONE_Y
+                    # Кодируем кадр в JPEG, затем в base64
+                    _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+                    frame_base64 = base64.b64encode(buffer).decode('utf-8')
 
-                # Вычисляем координаты прямоугольника
-                rect_x1 = int(offset_x)
-                rect_y1 = int(offset_y)
-                rect_x2 = int(offset_x + zone_width)
-                rect_y2 = int(offset_y + zone_height)
+                    # Отправляем в Electron через stdout (с префиксом FRAME:)
+                    print(f"FRAME:{frame_base64}")
 
-                cv2.rectangle(frame, (rect_x1, rect_y1), (rect_x2, rect_y2), (255, 255, 0), 2)
+            time.sleep(0.01)
 
-                # Отображаем активную руку для управления курсором (обводим желтым)
-                if active_hand == 'left' and left_center:
-                    cv2.circle(frame, left_center, 7, (0, 255, 0), cv2.FILLED)
-                elif active_hand == 'right' and right_center:
-                    cv2.circle(frame, right_center, 7, (0, 255, 0), cv2.FILLED)
-
-                cv2.putText(frame, f"FPS: {self.fps}", (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-                cv2.putText(frame, f"Control hand: {self.active_hand.upper() if self.active_hand else 'NONE'}",
-                            (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
-
-                cv2.imshow(camera_window_name, frame)
-
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                self.running = False
-                break
-            if frame is None:
-                time.sleep(0.01)
+    def set_frame_callback(self, callback):
+        """Устанавливает callback для отправки кадров в интерфейс"""
+        self.send_frame_callback = callback
 
     def run(self):
         if not self.running: return
@@ -432,7 +410,7 @@ class AdvancedCursorController:
         if hasattr(self, 'landmarker'):
             self.landmarker.close()
         self.cap.release()
-        cv2.destroyAllWindows()
+
         print("Программа завершена.")
 
 

@@ -7,8 +7,8 @@
     "path": "hand_landmarker.task"
   },
   "cursor": {
-    "sensitivity_zone_percent": 41,
-    "sensitivity_zone_X": 77,
+    "sensitivity_zone_percent": 23,
+    "sensitivity_zone_X": 100,
     "sensitivity_zone_Y": 100,
     "padding": 30,
     "smoothing_level": 0.72,

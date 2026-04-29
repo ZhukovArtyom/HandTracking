@@ -25,6 +25,9 @@ const electronAPI = {
   },
   onSettingsChanged: (callback) => {
     ipcRenderer.on('settings-changed', (event, settings) => callback(settings))
+  },
+  onFrame: (callback) => {
+    ipcRenderer.on('frame', (event, frameData) => callback(frameData))
   }
 }
 
