@@ -25,6 +25,37 @@ function App() {
 
   const [currentFrame, setCurrentFrame] = useState(null)
 
+  const getZoneStyles = () => {
+    // Размер зоны в процентах от родителя (trackingSize)
+    const sizePercent = trackingSize
+
+    // Ширина и высота зоны в процентах
+    const zoneSizePercent = sizePercent
+    const padding = 5
+
+    const offsetX = padding/2+((100-padding - zoneSizePercent) / 100) * sensitivityZoneX
+    const offsetY = padding/2+((100-padding - zoneSizePercent) / 100) * (100 - sensitivityZoneY)
+
+    // Левый верхний угол зоны
+    const left = offsetX
+    const top = offsetY
+
+    // Ограничиваем значения в пределах 0-100
+    const clampedLeft = Math.min(100 - zoneSizePercent, Math.max(0, left))
+    const clampedTop = Math.min(100 - zoneSizePercent, Math.max(0, top))
+
+    return {
+      position: 'absolute',
+      width: `${zoneSizePercent}%`,
+      height: `${zoneSizePercent}%`,
+      left: `${clampedLeft}%`,
+      top: `${clampedTop}%`,
+      borderRadius: '0.75rem',
+      border: '2px solid rgb(6,207,249)',
+      pointerEvents: 'none'
+    }
+  }
+
   const saveFullSettings = async (updates) => {
       if (!window.electronAPI?.saveSettings) return
 
@@ -260,8 +291,11 @@ function App() {
               )}
             </div>
 
-            <div class="absolute inset-0 rounded-xl mb-5">
-              <div id="sensetivity_zone" class="h-1/2 w-1/2 rounded-xl border-2 border-[rgb(6,207,249)]"></div>
+            <div class="absolute inset-0 rounded-xl mb-5 pointer-events-none">
+              <div
+                id="sensetivity_zone"
+                style={getZoneStyles()}
+              ></div>
             </div>
 
             <div class="absolute inset-0 mt-3 ml-3 mr-3 mb-8 grid grid-rows-[32px_10fr] grid-cols-[32px_10fr] gap-1">
