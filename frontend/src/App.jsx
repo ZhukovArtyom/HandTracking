@@ -87,7 +87,7 @@ function App() {
   const handleSensitivityZoneYChange = (value) => {
       setSensitivityZoneY(value)
       saveFullSettings({
-        cursor: { sensitivity_zone_Y: value }
+        cursor: { sensitivity_zone_Y: 100-value }
      })
   }
 
@@ -234,7 +234,7 @@ function App() {
                     <img src={moving_img} class="h-full" />
               </div>
               <div>
-                <div class="h-full bg-white/50 px-2 rounded-xl">
+                <div class="h-full bg-white/50 px-2 py-2 rounded-xl flex items-center">
                   <input
                     id="sensitivity_zone_x"
                     type="range"
@@ -242,21 +242,46 @@ function App() {
                     max="100"
                     value={sensitivityZoneX}
                     onChange={(e) => handleSensitivityZoneXChange(Number(e.target.value))}
-                    class="h-full w-full"
+                    className="h-full w-full
+                        [&::-webkit-slider-runnable-track]:bg-white
+                        [&::-webkit-slider-runnable-track]:rounded-full
+                        [&::-webkit-slider-runnable-track]:h-full
+                        [&::-moz-range-track]:bg-white
+                        [&::-moz-range-track]:rounded-full
+                        [&::-moz-range-track]:h-[10px]
+                        [&::-moz-range-progress]:bg-white
+                        [&::-moz-range-progress]:rounded-full
+                        [&::-moz-range-progress]:h-[10px]"
                   />
                 </div>
               </div>
               <div>
-                <div class="h-full bg-white/50 px-2 rounded-xl">
-                  <input
-                    id="sensitivity_zone_y"
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={sensitivityZoneY}
-                    onChange={(e) => handleSensitivityZoneYChange(Number(e.target.value))}
-                    class="h-full w-full"
-                  />
+                <div class="h-full bg-white/50 py-2 px-2 rounded-xl flex items-center justify-center">
+                    <input
+                        id="sensitivity_zone_y"
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={sensitivityZoneY}
+                        onChange={(e) => handleSensitivityZoneYChange(Number(e.target.value))}
+                        className="h-full w-full
+                        [&::-webkit-slider-runnable-track]:bg-white
+                        [&::-webkit-slider-runnable-track]:rounded-full
+                        [&::-webkit-slider-runnable-track]:w-full
+                        [&::-moz-range-track]:bg-white
+                        [&::-moz-range-track]:rounded-full
+                        [&::-moz-range-track]:w-[10px]
+                        [&::-moz-range-progress]:bg-white
+                        [&::-moz-range-progress]:rounded-full
+                        [&::-moz-range-progress]:w-[10px]"
+                        style={{
+                          WebkitAppearance: 'slider-vertical',
+                          appearance: 'slider-vertical',
+
+
+                        }}
+                      />
+
                 </div>
               </div>
             </div>

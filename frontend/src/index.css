@@ -1,1 +1,18 @@
 @import 'tailwindcss';
+
+/*
+input[id="sensitivity_zone_y"]::-webkit-slider-runnable-track {
+  background: white !important;
+  border-radius: 9999px !important;
+
+}
+
+input[id="sensitivity_zone_y"]::-moz-range-track {
+      background: white !important;
+      border-radius: 9999px !important;
+    }
+
+input[id="sensitivity_zone_y"]::-moz-range-progress {
+  background: white !important;
+  border-radius: 9999px !important;
+}*/
