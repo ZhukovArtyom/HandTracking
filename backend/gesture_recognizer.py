@@ -34,6 +34,13 @@ class GestureRecognizer:
         # Загружаем жесты из файла
         self.load_gestures()
 
+    def update_control_hand(self, new_control_hand):
+        """Обновляет контрольную руку для жестов"""
+        global CONTROL_HAND, SECOND_HAND
+        CONTROL_HAND = new_control_hand
+        SECOND_HAND = "left" if CONTROL_HAND == "right" else "right"
+        print(f"Gesture recognizer: control hand updated to {CONTROL_HAND}")
+
     def update_activation_delay(self, new_delay):
         """Обновляет задержку активации жестов"""
         global ACTIVATION_DELAY

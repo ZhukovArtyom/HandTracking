@@ -21,6 +21,7 @@ function App() {
   const [smoothingLevel, setSmoothingLevel] = useState(50)
   const [gestureSensitivity, setGestureSensitivity] = useState(50)
   const [activationDelay, setActivationDelay] = useState(0)
+  const [controlHand, setControlHand] = useState('right') // Добавлен state для выбранной руки
 
   const saveFullSettings = async (updates) => {
       if (!window.electronAPI?.saveSettings) return
@@ -46,6 +47,14 @@ function App() {
       } catch (error) {
         console.error('Error saving settings:', error)
       }
+  }
+
+  // Обработчик для кнопок выбора основной руки
+  const handleControlHandChange = (hand) => {
+    setControlHand(hand)
+    saveFullSettings({
+      cursor: { control_hand: hand }
+    })
   }
 
   // Использование:
@@ -91,7 +100,6 @@ function App() {
      })
   }
 
-
   // Загрузка настроек при запуске
   useEffect(() => {
     const loadSettings = async () => {
@@ -106,10 +114,13 @@ function App() {
               setSensitivityZoneX(settings.cursor.sensitivity_zone_X)
             }
             if (settings.cursor?.sensitivity_zone_Y !== undefined) {
-              setSensitivityZoneY(settings.cursor.sensitivity_zone_Y)
+              setSensitivityZoneY(100-settings.cursor.sensitivity_zone_Y)
             }
             if (settings.cursor?.smoothing_level !== undefined) {
               setSmoothingLevel(Math.round(settings.cursor.smoothing_level * 100))
+            }
+            if (settings.cursor?.control_hand !== undefined) {
+              setControlHand(settings.cursor.control_hand)
             }
             if (settings.gestures?.click_distance_threshold !== undefined) {
               setGestureSensitivity(Math.round(settings.gestures.click_distance_threshold * 1000))
@@ -141,6 +152,9 @@ function App() {
         }
         if (settings.cursor?.smoothing_level !== undefined) {
           setSmoothingLevel(Math.round(settings.cursor.smoothing_level * 100))
+        }
+        if (settings.cursor?.control_hand !== undefined) {
+          setControlHand(settings.cursor.control_hand)
         }
       })
     }
@@ -277,11 +291,8 @@ function App() {
                         style={{
                           WebkitAppearance: 'slider-vertical',
                           appearance: 'slider-vertical',
-
-
                         }}
                       />
-
                 </div>
               </div>
             </div>
@@ -369,12 +380,26 @@ function App() {
                     </div>
 
                     <div class="h-[4vmax] rounded-xl border border-gray-300 flex items-center p-[2px]">
-                        <button class="w-1/2 h-full mr-[2px] text-[rgb(6,207,249)] rounded-xl">
-                           Левая
-                        </button>
-                        <button class="w-1/2 h-full bg-[rgb(6,207,249)] text-white rounded-xl">
-                           Правая
-                        </button>
+                      <button
+                        onClick={() => handleControlHandChange('left')}
+                        className={`w-1/2 h-full mr-[2px] rounded-xl transition-colors ${
+                          controlHand === 'left'
+                            ? 'bg-[rgb(6,207,249)] text-white'
+                            : 'bg-white text-[rgb(6,207,249)]'
+                        }`}
+                      >
+                        Левая
+                      </button>
+                      <button
+                        onClick={() => handleControlHandChange('right')}
+                        className={`w-1/2 h-full rounded-xl transition-colors ${
+                          controlHand === 'right'
+                            ? 'bg-[rgb(6,207,249)] text-white'
+                            : 'bg-white text-[rgb(6,207,249)]'
+                        }`}
+                      >
+                        Правая
+                      </button>
                     </div>
                 </div>
 

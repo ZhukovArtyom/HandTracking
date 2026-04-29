@@ -166,6 +166,7 @@ class AdvancedCursorController:
 
             # Обновляем gesture_recognizer
             if hasattr(self, 'gesture_recognizer'):
+                self.gesture_recognizer.update_control_hand(CONTROL_HAND)
                 self.gesture_recognizer.update_activation_delay(ACTIVATION_DELAY)
                 self.gesture_recognizer.update_click_threshold(CLICK_DISTANCE_THRESHOLD)
 
