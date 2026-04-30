@@ -3,6 +3,8 @@
     {
       "id": "screenshot",
       "name": "Скриншот",
+      "image": "",
+      "enabled": true,
       "points_groups": [["main_8","second_4"],["main_4","second_8"]],
       "type": "keyboard",
       "on_press": "print screen",
@@ -11,6 +13,8 @@
     {
       "id": "mouse_up",
       "name": "прокрутка вверх",
+      "image": "",
+      "enabled": true,
       "points_groups": [["main_4", "main_16"]],
       "type": "system",
       "on_press": "wheel_up",
@@ -19,6 +23,8 @@
     {
       "id": "mouse_down",
       "name": "прокрутка вниз",
+      "image": "",
+      "enabled": true,
       "points_groups": [["main_4", "main_20"]],
       "type": "system",
       "on_press": "wheel_down",
@@ -27,6 +33,8 @@
     {
       "id": "left_click",
       "name": "Левый клик правой рукой",
+      "image": "",
+      "enabled": false,
       "points_groups": [["main_4", "main_8"]],
       "type": "system",
       "on_press": "left_click_press",
@@ -36,6 +44,8 @@
     {
       "id": "right_click",
       "name": "Правый клик правой рукой",
+      "image": "",
+      "enabled": true,
       "points_groups": [["main_4", "main_12"]],
       "hand": "right",
       "type": "system",

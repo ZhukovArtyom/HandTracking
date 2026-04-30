@@ -58,7 +58,10 @@ class GestureRecognizer:
         try:
             with open(self.gestures_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                self.gestures = data.get('gestures', [])
+                all_gestures = data.get('gestures', [])
+                # Фильтруем: оставляем только те, у которых enabled == "true"
+                self.gestures = [g for g in all_gestures if g.get('enabled') == True]
+
                 print(f"Загружено {len(self.gestures)} жестов:")
 
         except FileNotFoundError:
