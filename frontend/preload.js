@@ -36,6 +36,12 @@ const electronAPI = {
   saveGestures: (gestures) => {
     console.log('saveGestures called')
     return ipcRenderer.invoke('save-gestures', gestures)
+  },
+  onPythonStatus: (callback) => {
+    ipcRenderer.on('python-status', (event, status) => callback(status))
+  },
+  onFps: (callback) => {
+    ipcRenderer.on('python-fps', (event, fps) => callback(fps))
   }
 }
 

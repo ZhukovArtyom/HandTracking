@@ -32,6 +32,9 @@ function App() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [gestureToDelete, setGestureToDelete] = useState(null)
 
+  const [pythonStatus, setPythonStatus] = useState('ОСТАНОВЛЕНО') // 'ОСТАНОВЛЕНО', 'ЗАПУСКАЕТСЯ...', 'ЗАПУЩЕНО'
+  const [fps, setFps] = useState(0)
+
   // Загрузка жестов из файла
   const loadGestures = async () => {
     try {
@@ -213,6 +216,9 @@ function App() {
     if (window.electronAPI?.onFrame) {
       window.electronAPI.onFrame((frameData) => {
         setCurrentFrame(`data:image/jpeg;base64,${frameData}`)
+
+        setPythonStatus('ЗАПУЩЕНО')
+        setPythonRunning(true)
       })
     }
   }, [])
@@ -313,21 +319,43 @@ function App() {
     }
   }, [])
 
+  // Получение статуса Python
   useEffect(() => {
-    if (apiReady) {
-      window.electronAPI.getPythonStatus().then(setPythonRunning).catch(err => {
-        console.error('Error getting status:', err)
+    if (window.electronAPI?.onPythonStatus) {
+      window.electronAPI.onPythonStatus((status) => {
+        if (status === 'starting') {
+          setPythonStatus('ЗАПУСКАЕТСЯ...')
+          setPythonRunning(false)
+        } else if (status === 'running') {
+          setPythonRunning(true)
+          // Статус "ЗАПУЩЕНО" установится при получении первого кадра
+        } else if (status === 'stopped') {
+          setPythonStatus('ОСТАНОВЛЕНО')
+          setPythonRunning(false)
+          setCurrentFrame(null)
+          setFps(0)
+        }
       })
     }
-  }, [apiReady])
+  }, [])
+
+  useEffect(() => {
+    if (window.electronAPI?.onFps) {
+      window.electronAPI.onFps((fpsValue) => {
+        setFps(fpsValue)
+      })
+    }
+  }, [])
 
   const startPython = async () => {
     if (!apiReady) return
     try {
+      setPythonStatus('ЗАПУСКАЕТСЯ...')
       await window.electronAPI.startPython()
-      setPythonRunning(true)
+      // Статус "ЗАПУЩЕНО" установится при получении первого кадра
     } catch (error) {
       console.error('Error starting Python:', error)
+      setPythonStatus('ОСТАНОВЛЕНО')
     }
   }
 
@@ -335,7 +363,10 @@ function App() {
     if (!apiReady) return
     try {
       await window.electronAPI.stopPython()
+      setPythonStatus('ОСТАНОВЛЕНО')
       setPythonRunning(false)
+      setCurrentFrame(null)
+      setFps(0)
     } catch (error) {
       console.error('Error stopping Python:', error)
     }
@@ -358,7 +389,7 @@ function App() {
       <div class="w-full bg-white flex">
         <div class="w-6/10 mt-5 ml-5 mb-5">
           <div class="relative w-full aspect-[4/3]">
-            <div class="absolute inset-0 bg-gray-500 rounded-xl mb-5 overflow-hidden">
+            <div class="absolute inset-0 bg-gray-800 rounded-xl mb-5 overflow-hidden">
               {currentFrame ? (
                 <img
                   src={currentFrame}
@@ -367,7 +398,7 @@ function App() {
                 />
               ) : (
                 <div class="w-full h-full flex items-center justify-center text-white">
-                  Камера
+
                 </div>
               )}
             </div>
@@ -430,7 +461,30 @@ function App() {
                         }}
                       />
                 </div>
+
               </div>
+
+              <div className="h-full w-full flex justify-end items-end">
+                  <div className="bg-white/70 h-1/10 rounded-xl px-3 py-1 flex items-center gap-3">
+                    <div className="flex items-center">
+                      <p className="text-[1.5vmax] font-bold text-black">СТАТУС:</p>
+                      <p className={`text-[1.5vmax] font-bold ml-2 ${
+                        pythonStatus === 'ЗАПУЩЕНО' ? 'text-green-600' :
+                        pythonStatus === 'ЗАПУСКАЕТСЯ...' ? 'text-yellow-600' : 'text-red-600'
+                      }`}>
+                        {pythonStatus}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center">
+                      <p className="text-[1.5vmax] font-bold text-black">FPS:</p>
+                      <p className="text-[1.5vmax] font-bold text-black ml-2">
+                        {fps}
+                      </p>
+                    </div>
+                  </div>
+              </div>
+
             </div>
           </div>
           <div class="w-full flex">

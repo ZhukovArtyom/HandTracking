@@ -358,9 +358,14 @@ class AdvancedCursorController:
                     elif active_hand == 'right' and right_center:
                         cv2.circle(frame, right_center, 7, (0, 255, 0), cv2.FILLED)
 
-                    # Добавляем текст
-                    cv2.putText(frame, f"FPS: {self.fps}", (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                    self.frame_count += 1
+                    if time.time() - self.last_fps_time >= 1.0:
+                        self.fps = self.frame_count
+                        self.frame_count = 0
+                        self.last_fps_time = time.time()
 
+                        # Отправляем фпс в электрон
+                        print(f"FPS:{self.fps}")
 
                     # Кодируем кадр в JPEG, затем в base64
                     _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])

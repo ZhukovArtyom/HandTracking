@@ -106,7 +106,12 @@ ipcMain.handle('start-python', async () => {
     if (output.startsWith('FRAME:')) {
       const frameData = output.substring(6)
       mainWindow?.webContents.send('frame', frameData)
-    } else {
+    }
+    else if (output.startsWith('FPS:')) {
+        const fpsValue = parseInt(output.substring(4))
+        mainWindow?.webContents.send('python-fps', fpsValue)
+    }
+    else {
       console.log(`Python: ${output}`)
       mainWindow?.webContents.send('python-log', output)
     }
@@ -116,6 +121,10 @@ ipcMain.handle('start-python', async () => {
     const error = data.toString('utf-8')
     console.error(`Python error: ${error}`)
     mainWindow?.webContents.send('python-error', error)
+  })
+
+  pythonProcess.on('spawn', () => {
+      mainWindow?.webContents.send('python-status', 'starting')
   })
 
   pythonProcess.on('close', (code) => {
