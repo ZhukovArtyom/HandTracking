@@ -4,7 +4,7 @@ import settings_img from '../assets/settings_icon.png'
 import delete_img from '../assets/delete_icon.png'
 
 function GestureCard({ gesture, onToggle, onEdit, onDelete }) {
-  const [isEnabled, setIsEnabled] = useState(gesture.enabled === "true")
+  const [isEnabled, setIsEnabled] = useState(gesture.enabled === true)
 
   const handleToggle = () => {
     const newState = !isEnabled
@@ -63,13 +63,13 @@ function GestureCard({ gesture, onToggle, onEdit, onDelete }) {
         </div>
         <div className="h-1/4 max-w-[31vmax] flex flex-col">
 
-                    <h3 className="text-[2.5vmax] font-semibold text-black text-left overflow-hidden text-ellipsis">
+                    <h3 className="text-[2.5vmax] font-semibold text-black text-left overflow-hidden truncate text-ellipsis">
                       {gesture.name || 'Название'}
                     </h3>
 
 
-                <p className="text-[2vmax] font-regular text-black text-left overflow-hidden text-ellipsis">
-                  {gesture.on_press || 'Действие'}
+                <p className="text-[2vmax] font-regular text-black text-left overflow-hidden truncate text-ellipsis">
+                  {gesture.action_name || 'Действие'}
                 </p>
 
         </div>

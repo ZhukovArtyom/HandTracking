@@ -27,6 +27,79 @@ function App() {
 
   const [currentFrame, setCurrentFrame] = useState(null)
 
+  const [gestures, setGestures] = useState([])
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [gestureToDelete, setGestureToDelete] = useState(null)
+
+  // Загрузка жестов из файла
+  const loadGestures = async () => {
+    try {
+      if (window.electronAPI && window.electronAPI.readGestures) {
+        const gesturesData = await window.electronAPI.readGestures()
+        if (gesturesData && gesturesData.gestures) {
+          setGestures(gesturesData.gestures)
+          console.log('Gestures loaded:', gesturesData.gestures)
+        }
+      } else {
+        console.log('electronAPI.readGestures not available')
+
+      }
+    } catch (error) {
+      console.error('Error loading gestures:', error)
+    }
+  }
+
+
+  const handleGestureToggle = async (id, enabled) => {
+    // Обновляем локальный state
+    setGestures(prevGestures =>
+      prevGestures.map(g =>
+        g.id === id ? { ...g, enabled} : g
+      )
+    )
+
+    // Сохраняем в файл
+    if (window.electronAPI?.saveGestures) {
+      const updatedGestures = gestures.map(g =>
+        g.id === id ? { ...g, enabled} : g
+      )
+      await window.electronAPI.saveGestures({ gestures: updatedGestures })
+    }
+  }
+
+  const handleGestureEdit = (gesture) => {
+    console.log('Edit gesture:', gesture)
+    // Здесь будет открытие модального окна редактирования
+  }
+
+  const handleGestureDelete = (id) => {
+      setGestureToDelete(id)
+      setShowDeleteModal(true)
+  }
+
+  const confirmDelete = async () => {
+    if (gestureToDelete) {
+      // Удаляем жест
+      const updatedGestures = gestures.filter(g => g.id !== gestureToDelete)
+      setGestures(updatedGestures)
+
+      // Сохраняем в файл
+      if (window.electronAPI?.saveGestures) {
+        await window.electronAPI.saveGestures({ gestures: updatedGestures })
+      }
+
+      // Закрываем модальное окно
+      setShowDeleteModal(false)
+      setGestureToDelete(null)
+    }
+  }
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false)
+    setGestureToDelete(null)
+  }
+
   const getZoneStyles = () => {
     // Размер зоны в процентах от родителя (trackingSize)
     const sizePercent = trackingSize
@@ -142,6 +215,12 @@ function App() {
         setCurrentFrame(`data:image/jpeg;base64,${frameData}`)
       })
     }
+  }, [])
+
+
+  // Загрузка жестов при запуске
+  useEffect(() => {
+      loadGestures()
   }, [])
 
   // Загрузка настроек при запуске
@@ -534,29 +613,50 @@ function App() {
             </button>
         </div>
 
-        <div class="flex-1 flex overflow-x-auto mb-5 ml-5 mr-5">
-          <GestureCard
-              key={"first"}
-              gesture={"gesture"}
-
-            />
-
-          <GestureCard
-              key={"first"}
-              gesture={"gesture"}
-
-            />
-
-          <GestureCard
-              key={"first"}
-              gesture={"gesture"}
-
-            />
+        <div id="gestureLibrary" class="flex-1 flex overflow-x-auto mb-5 ml-5 mr-5">
+                {gestures.map((gesture) => (
+                    <GestureCard
+                      key={gesture.id}
+                      gesture={gesture}
+                      onToggle={handleGestureToggle}
+                      onEdit={handleGestureEdit}
+                      onDelete={() => handleGestureDelete(gesture.id)}
+                    />
+                ))}
         </div>
       </div>
       <div class="w-full h-[3vmax] border-t-2 border-gray-300">
-        Подвал
+                {/*   Подвал */}
       </div>
+
+
+
+      {showDeleteModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                Вы уверены, что хотите удалить этот жест?
+              </h3>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={cancelDelete}
+                  className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
+                >
+                  Отмена
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="px-4 py-2 text-white bg-red-500 hover:bg-red-600 rounded-lg transition"
+                >
+                  Удалить
+                </button>
+              </div>
+            </div>
+
+          </div>
+        )}
+
     </div>
   )
 }

@@ -8,10 +8,10 @@
   },
   "cursor": {
     "sensitivity_zone_percent": 40,
-    "sensitivity_zone_X": 85,
-    "sensitivity_zone_Y": 55,
+    "sensitivity_zone_X": 94,
+    "sensitivity_zone_Y": 53,
     "padding": 30,
-    "smoothing_level": 0.55,
+    "smoothing_level": 0.6,
     "control_hand": "right"
   },
   "gestures": {

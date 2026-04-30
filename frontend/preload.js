@@ -28,6 +28,14 @@ const electronAPI = {
   },
   onFrame: (callback) => {
     ipcRenderer.on('frame', (event, frameData) => callback(frameData))
+  },
+  readGestures: () => {
+    console.log('readGestures called')
+    return ipcRenderer.invoke('read-gestures')
+  },
+  saveGestures: (gestures) => {
+    console.log('saveGestures called')
+    return ipcRenderer.invoke('save-gestures', gestures)
   }
 }
 

@@ -8,8 +8,8 @@ let mainWindow = null
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 640,
+    height: 640,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -147,6 +147,38 @@ ipcMain.handle('stop-python', async () => {
 ipcMain.handle('get-python-status', async () => {
   return pythonProcess !== null
 })
+
+
+ipcMain.handle('read-gestures', async () => {
+  try {
+    const gesturesPath = path.join(__dirname, '..', 'backend', 'config', 'gestures.json')
+    console.log('Reading gestures from:', gesturesPath)
+
+    if (fs.existsSync(gesturesPath)) {
+      const data = fs.readFileSync(gesturesPath, 'utf8')
+      return JSON.parse(data)
+    } else {
+      console.error('Gestures file not found')
+      return { gestures: [] }
+    }
+  } catch (error) {
+    console.error('Error reading gestures:', error)
+    return { gestures: [] }
+  }
+})
+
+ipcMain.handle('save-gestures', async (event, gesturesData) => {
+  try {
+    const gesturesPath = path.join(__dirname, '..', 'backend', 'config', 'gestures.json')
+    fs.writeFileSync(gesturesPath, JSON.stringify(gesturesData, null, 2), 'utf8')
+    console.log('Gestures saved successfully')
+    return { success: true }
+  } catch (error) {
+    console.error('Error saving gestures:', error)
+    return { success: false }
+  }
+})
+
 
 app.whenReady().then(createWindow)
 
