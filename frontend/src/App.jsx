@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
+import GestureCard from './components/GestureCard'
+
 import config_img from './assets/config.png'
 import cursor_img from './assets/cursor.png'
 import hand_blue_bg_img from './assets/hand_blue_bg.png'
@@ -532,10 +534,24 @@ function App() {
             </button>
         </div>
 
-        <div class="flex-1 flex overflow-x-auto mt-2 mb-5 ml-5 mr-5">
-          <div class="flex-shrink-0 w-80 bg-red-500 mr-4">Элемент 1</div>
-          <div class="flex-shrink-0 w-80 bg-red-500 mr-4">Элемент 2</div>
-          <div class="flex-shrink-0 w-80 bg-red-500 mr-4">Элемент 3</div>
+        <div class="flex-1 flex overflow-x-auto mb-5 ml-5 mr-5">
+          <GestureCard
+              key={"first"}
+              gesture={"gesture"}
+
+            />
+
+          <GestureCard
+              key={"first"}
+              gesture={"gesture"}
+
+            />
+
+          <GestureCard
+              key={"first"}
+              gesture={"gesture"}
+
+            />
         </div>
       </div>
       <div class="w-full h-[3vmax] border-t-2 border-gray-300">
