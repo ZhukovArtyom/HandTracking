@@ -9,7 +9,7 @@ function NewGestureMenu({ }) {
 
   return (
 
-      <div class="h-[41vmax] w-full pl-[2vmax]">
+      <div class="h-[44vmax] w-full pl-[2vmax]">
 
            <div class="w-full h-full bg-white rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)] flex flex-col">
                 <div class="w-full h-[5vmax] border-b-2 border-gray-300 flex items-center">
