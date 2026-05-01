@@ -15,7 +15,7 @@ function GestureCard({ gesture, onToggle, onEdit, onDelete }) {
   }
 
   return (
-    <div className="h-[30vmax] aspect-[6/5] bg-white rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)] mr-3 mb-2 mt-2 p-[1.5vmax] flex flex-col ">
+    <div className="h-full aspect-[6/5] bg-white rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)] mr-3 p-[1.5vmax] flex flex-col ">
         <div className="h-3/4 w-full py-2 flex">
             <div className="h-full aspect-[1/1] rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                     {gesture.image ? (

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import GestureCard from './components/GestureCard'
+import NewGestureMenu from './components/NewGestureMenu'
 
 import config_img from './assets/config.png'
 import cursor_img from './assets/cursor.png'
@@ -386,10 +387,10 @@ function App() {
         <img src={hand_blue_bg_img} class="h-full py-[1vmax] ml-[1vmax] mr-[0.5vmax]" alt="config" />
         <p class="text-[2vmax] text-[rgb(6,207,249)] font-bold">HandTrackingControl</p>
       </div>
-      <div class="w-full bg-white flex">
-        <div class="w-6/10 mt-5 ml-5 mb-5">
-          <div class="relative w-full aspect-[4/3]">
-            <div class="absolute inset-0 bg-gray-800 rounded-xl mb-5 overflow-hidden">
+      <div class="w-full h-[52vmax] bg-white p-[2vmax] flex">
+        <div class="h-full">
+          <div class="relative w-[59vmax] aspect-[4/3]">
+            <div class="absolute inset-0 bg-gray-800 rounded-xl overflow-hidden">
               {currentFrame ? (
                 <img
                   src={currentFrame}
@@ -410,7 +411,7 @@ function App() {
               ></div>
             </div>
 
-            <div class="absolute inset-0 mt-3 ml-3 mr-3 mb-8 grid grid-rows-[32px_10fr] grid-cols-[32px_10fr] gap-1">
+            <div class="absolute inset-0 m-3 grid grid-rows-[32px_10fr] grid-cols-[32px_10fr] gap-1">
               <div class="h-full bg-white/50 p-[3px] rounded-xl">
                     <img src={moving_img} class="h-full" />
               </div>
@@ -487,10 +488,10 @@ function App() {
 
             </div>
           </div>
-          <div class="w-full flex">
+          <div class="w-full h-[5vmax] pt-[2vmax] flex">
             <button
               onClick={handlePythonToggle}
-              class={`w-2/3 text-white px-4 py-2 rounded-xl transition-colors ${
+              class={`w-2/3 text-white text-[1.5vmax] rounded-xl transition-colors ${
                 pythonRunning
                   ? 'bg-red-500 hover:bg-red-700'
                   : 'bg-[rgb(6,207,249)] hover:bg-[rgb(5,180,220)]'
@@ -498,40 +499,39 @@ function App() {
             >
               {pythonRunning ? 'ОСТАНОВИТЬ' : 'ЗАПУСТИТЬ'}
             </button>
-            <button class="w-1/3 bg-white text-[rgb(6,207,249)] border-2 border-[rgb(6,207,249)] px-4 py-2 rounded-xl ml-3">
+            <button class="w-1/3 bg-white text-[1.5vmax] text-[rgb(6,207,249)] border-2 border-[rgb(6,207,249)] rounded-xl ml-3">
               ПРОВЕРКА
             </button>
           </div>
         </div>
 
-        <div class="w-4/10 bg-white rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)] m-5">
+        {/*         <NewGestureMenu/> */}
+
+        <div class="h-[49vmax] w-full ml-[2vmax] bg-white rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]">
           <div class="w-full h-[5vmax] border-b-2 border-gray-300 flex items-center">
-            <div class="h-5/10 flex items-center ml-3">
+            <div class="h-5/10 flex items-center ml-[0.5vmax]">
               <img src={config_img} class="h-full m-2" alt="config" />
-              <p class="text-[12pt]">Конфигурация</p>
+              <p class="text-[2vmax]">Конфигурация</p>
             </div>
           </div>
 
-          {/* Меню "Управление курсором" */}
           <div class="relative inline-block w-full" ref={cursorMenuRef}>
             <button
               onClick={() => setCursorMenuOpen(!cursorMenuOpen)}
               class="h-[4vmax] w-full text-black border-b border-gray-300 transition flex items-center"
             >
-              <div class="h-5/10 flex items-center ml-5">
+              <div class="h-5/10 flex items-center ml-[2vmax]">
                 <img src={cursor_img} class="h-full m-2" alt="cursor" />
-                <p class="text-[10pt]">Управление курсором</p>
+                <p class="text-[1.7vmax]">Управление курсором</p>
               </div>
             </button>
-
             {cursorMenuOpen && (
               <div class="w-full text-xs">
-                <div class="px-4 py-2">
+                <div class="px-[3vmax] py-[0.5vmax]">
                     <div class="h-[4vmax] flex items-center justify-between">
-                      <p class="text-[10pt]">РАЗМЕР ОБЛАСТИ ОТСЛЕЖИВАНИЯ</p>
-                      <p class="text-sm text-[rgb(6,207,249)] font-bold">{trackingSize}%</p>
+                      <p class="text-[1.5vmax]">РАЗМЕР ОБЛАСТИ ОТСЛЕЖИВАНИЯ</p>
+                      <p class="text-[1.5vmax] text-[rgb(6,207,249)] font-bold">{trackingSize}%</p>
                     </div>
-
                     <div class="h-[4vmax] flex items-center">
                       <input
                         id="sensetivity_zone_size"
@@ -544,13 +544,11 @@ function App() {
                       />
                     </div>
                 </div>
-
-                <div class="px-4 py-2">
+                <div class="px-[3vmax] py-[0.5vmax]">
                     <div class="h-[4vmax] flex items-center justify-between">
-                      <p class="text-[10pt]">СГЛАЖИВАНИЕ</p>
-                      <p class="text-sm text-[rgb(6,207,249)] font-bold">{smoothingLevel}%</p>
+                      <p class="text-[1.5vmax]">СГЛАЖИВАНИЕ</p>
+                      <p class="text-[1.5vmax] text-[rgb(6,207,249)] font-bold">{smoothingLevel}%</p>
                     </div>
-
                     <div class="h-[4vmax] flex items-center">
                       <input
                         id="smoothing_level"
@@ -563,16 +561,14 @@ function App() {
                       />
                     </div>
                 </div>
-
-                <div class="px-4 py-2">
+                <div class="px-[3vmax] py-[0.5vmax]">
                     <div class="h-[4vmax] flex items-center">
-                      <p class="text-[10pt]">ОСНОВНАЯ РУКА</p>
+                      <p class="text-[1.5vmax]">ОСНОВНАЯ РУКА</p>
                     </div>
-
                     <div class="h-[4vmax] rounded-xl border border-gray-300 flex items-center p-[2px]">
                       <button
                         onClick={() => handleControlHandChange('left')}
-                        className={`w-1/2 h-full mr-[2px] rounded-xl transition-colors ${
+                        className={`w-1/2 h-full text-[2vmax] mr-[2px] rounded-xl transition-colors ${
                           controlHand === 'left'
                             ? 'bg-[rgb(6,207,249)] text-white'
                             : 'bg-white text-[rgb(6,207,249)]'
@@ -582,7 +578,7 @@ function App() {
                       </button>
                       <button
                         onClick={() => handleControlHandChange('right')}
-                        className={`w-1/2 h-full rounded-xl transition-colors ${
+                        className={`w-1/2 h-full text-[2vmax] rounded-xl transition-colors ${
                           controlHand === 'right'
                             ? 'bg-[rgb(6,207,249)] text-white'
                             : 'bg-white text-[rgb(6,207,249)]'
@@ -592,31 +588,27 @@ function App() {
                       </button>
                     </div>
                 </div>
-
               </div>
             )}
           </div>
 
-          {/* Меню "Жесты" */}
           <div class="relative inline-block w-full" ref={gestureMenuRef}>
             <button
               onClick={() => setGestureMenuOpen(!gestureMenuOpen)}
               class="h-[4vmax] w-full text-black border-b border-gray-300 transition flex items-center"
             >
-              <div class="h-5/10 flex items-center ml-5">
+              <div class="h-5/10 flex items-center ml-[2vmax]">
                 <img src={hand_blue_bg_img} class="h-full m-2" alt="gestures" />
-                <p class="text-[10pt]">Распознавание жестов</p>
+                <p class="text-[1.7vmax]">Распознавание жестов</p>
               </div>
             </button>
-
             {gestureMenuOpen && (
               <div class="w-full">
-                <div class="px-4 py-2">
+                <div class="px-[3vmax] py-[0.5vmax]">
                     <div class="h-[4vmax] flex items-center justify-between">
-                      <p class="text-[10pt]">ЧУВСТВИТЕЛЬНОСТЬ РАСПОЗНАВАНИЯ ЖЕСТОВ</p>
-                      <p class="text-sm text-[rgb(6,207,249)] font-bold">{gestureSensitivity}%</p>
+                      <p class="text-[1.3vmax]">ЧУВСТВИТЕЛЬНОСТЬ РАСПОЗНАВАНИЯ ЖЕСТОВ</p>
+                      <p class="text-[1.5vmax] text-[rgb(6,207,249)] font-bold">{gestureSensitivity}%</p>
                     </div>
-
                     <div class="h-[4vmax] flex items-center">
                       <input
                         id="gesture_sensitivity"
@@ -629,13 +621,11 @@ function App() {
                       />
                     </div>
                 </div>
-
-                <div class="px-4 py-2">
+                <div class="px-[3vmax] py-[0.5vmax]">
                     <div class="h-[4vmax] flex items-center justify-between">
-                      <p class="text-[10pt]">ЗАДЕРЖКА СРАБАТЫВАНИЯ ЖЕСТОВ</p>
-                      <p class="text-sm text-[rgb(6,207,249)] font-bold">{activationDelay} сек.</p>
+                      <p class="text-[1.3vmax]">ЗАДЕРЖКА СРАБАТЫВАНИЯ ЖЕСТОВ</p>
+                      <p class="text-[1.5vmax] text-[rgb(6,207,249)] font-bold">{activationDelay} сек.</p>
                     </div>
-
                     <div class="h-[4vmax] flex items-center">
                       <input
                         id="activation_delay"
@@ -652,22 +642,21 @@ function App() {
               </div>
             )}
           </div>
-
         </div>
       </div>
 
-      <div class="w-full flex-1 min-h-[27vmax] flex flex-col">
-        <div class="w-full h-[3vmax] px-5 flex justify-between">
+      <div class="w-full h-[38vmax] flex flex-col mt-[2vmax]">
+        <div class="w-full h-[4vmax] px-[2vmax] flex justify-between">
             <div class="h-full flex items-center">
               <img src={hand_white_bg_img} class="h-full" />
-              <p class="text-[12pt] ml-2">Библиотека жестов</p>
+              <p class="text-[1.5vmax] ml-2">Библиотека жестов</p>
             </div>
-            <button class="px-3 text-[10pt] text-[rgb(6,207,249)] border-2 border-[rgb(6,207,249)] rounded-xl">
+            <button class="px-[3vmax] text-[1.2vmax] text-[rgb(6,207,249)] border-2 border-[rgb(6,207,249)] rounded-xl">
               + ДОБАВИТЬ ЖЕСТ
             </button>
         </div>
 
-        <div id="gestureLibrary" class="flex-1 flex overflow-x-auto mb-5 ml-5 mr-5">
+        <div id="gestureLibrary" class="h-full flex overflow-x-auto  ml-[2vmax] mr-[2vmax] mb-[1vmax] pt-[2vmax] pb-[2vmax]">
                 {gestures.map((gesture) => (
                     <GestureCard
                       key={gesture.id}
