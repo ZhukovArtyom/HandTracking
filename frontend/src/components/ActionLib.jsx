@@ -10,10 +10,18 @@ function ActionLib({ }) {
 
 
   return (
-        <div className="h-[42vmax]  w-full bg-white border-t-2 border-gray-300 -mt-[6vmax] flex flex-col">
-            <div className="h-[6vmax] w-full flex items-center justify-center py-[1.2vmax] border-b-2 border-gray-300">
-                <img src={action_img} className="h-full ml-[2vmax] mr-[1vmax]"/>
-                <p class="text-[2vmax] font-semibold">Библиотека действий</p>
+        <div className="h-[42vmax]  w-full bg-white border-t-2 border-gray-300 -mt-[6vmax] flex flex-col shadow-[0px_-2px_8px_rgba(0,0,0,0.25)]">
+            <div className="h-[6vmax] w-full flex items-center justify-between py-[1.2vmax] px-[2vmax] border-b-2 border-gray-300">
+                <div className="h-full flex items-center">
+                    <img src={action_img} className="h-full mr-[1vmax]"/>
+                    <p class="text-[2vmax] font-semibold">Библиотека действий</p>
+                </div>
+                <input
+                   type="text"
+                   placeholder="Поиск..."
+                   className="h-full text-[1.7vmax] p-[1.5vmax] border border-[rgb(6,207,249)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[rgb(6,207,249)]"
+                />
+
             </div>
 
             <div className="flex-1 min-h-0 flex pr-[2vmax]">
