@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 
-import settings_img from '../assets/settings_icon.png'
+import action_img from '../assets/action_icon.png'
 import plus_img from '../assets/plus_icon.png'
 import hand_blue_bg_img from '../assets/hand_blue_bg.png'
 
@@ -43,7 +43,7 @@ function NewGestureMenu({ }) {
 
                       <div class="h-3/10 flex flex-col justify-between pb-[1.5vmax]">
                             <div class="h-1/4 flex items-center">
-                              <img src={settings_img} class="h-full" alt="config" />
+                              <img src={action_img} class="h-full" alt="config" />
                               <p class="text-[2vmax] pl-[1vmax]">Действие</p>
                             </div>
 

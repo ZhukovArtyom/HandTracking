@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import GestureCard from './components/GestureCard'
 import NewGestureMenu from './components/NewGestureMenu'
+import ActionLib from './components/ActionLib'
 
 import config_img from './assets/config.png'
 import cursor_img from './assets/cursor.png'
@@ -388,9 +389,9 @@ function App() {
         <p class="text-[2vmax] text-[rgb(6,207,249)] font-bold">HandTrackingControl</p>
       </div>
       <div class="w-full h-[52vmax] bg-white p-[2vmax] flex">
-        <div class="h-full">
+        <div class="h-full ">
           <div class="relative w-[59vmax] aspect-[4/3]">
-            <div class="absolute inset-0 bg-gray-800 rounded-xl overflow-hidden">
+            <div class="absolute inset-0 bg-gray-800 rounded-xl overflow-hidden shadow-[4px_4px_8px_rgba(0,0,0,0.5)]">
               {currentFrame ? (
                 <img
                   src={currentFrame}
@@ -505,9 +506,9 @@ function App() {
           </div>
         </div>
 
-        {/*         <NewGestureMenu/> */}
+        <NewGestureMenu/>
 
-        <div class="h-[49vmax] w-full ml-[2vmax] bg-white rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]">
+        {/* <div class="h-[49vmax] w-full ml-[2vmax] bg-white rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]">
           <div class="w-full h-[5vmax] border-b-2 border-gray-300 flex items-center">
             <div class="h-5/10 flex items-center ml-[0.5vmax]">
               <img src={config_img} class="h-full m-2" alt="config" />
@@ -642,11 +643,15 @@ function App() {
               </div>
             )}
           </div>
-        </div>
+        </div> */}
       </div>
 
+
       <div class="w-full h-[38vmax] flex flex-col mt-[2vmax]">
-        <div class="w-full h-[4vmax] px-[2vmax] flex justify-between">
+
+        <ActionLib/>
+
+        {/* <div class="w-full h-[4vmax] px-[2vmax] flex justify-between">
             <div class="h-full flex items-center">
               <img src={hand_white_bg_img} class="h-full" />
               <p class="text-[1.5vmax] ml-2">Библиотека жестов</p>
@@ -666,7 +671,7 @@ function App() {
                       onDelete={() => handleGestureDelete(gesture.id)}
                     />
                 ))}
-        </div>
+        </div> */}
       </div>
       <div class="w-full h-[3vmax] border-t-2 border-gray-300">
                 {/*   Подвал */}
