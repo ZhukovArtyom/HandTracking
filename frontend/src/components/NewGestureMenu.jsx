@@ -4,7 +4,7 @@ import action_img from '../assets/action_icon.png'
 import plus_img from '../assets/plus_icon.png'
 import hand_blue_bg_img from '../assets/hand_blue_bg.png'
 
-function NewGestureMenu({ }) {
+function NewGestureMenu({onCancel}) {
 
 
   return (
@@ -58,8 +58,13 @@ function NewGestureMenu({ }) {
                                     Сохранить
                             </button>
 
-                            <button class="h-full w-1/2 text-[1.7vmax] ml-[1.5vmax] border-2 border-[rgb(6,207,249)] rounded-xl text-[rgb(6,207,249)]">
-                                    Отменить
+                            <button
+                                onClick={onCancel}
+                                class="h-full w-1/2 text-[1.7vmax] ml-[1.5vmax] border-2 border-[rgb(6,207,249)] rounded-xl text-[rgb(6,207,249)]"
+                            >
+
+                               Отменить
+
                             </button>
 
                       </div>

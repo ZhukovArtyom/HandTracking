@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 
+import ActionCard from './ActionCard'
+
 import action_img from '../assets/action_icon.png'
 import keys_img from '../assets/keys.png'
 import exe_img from '../assets/exe_icon.png'
@@ -32,13 +34,8 @@ function ActionLib({ }) {
                       </div>
 
                      <div className="h-full flex flex-col overflow-y-auto pt-[0.5vmax] pl-[2vmax] pr-[1vmax]">
-                         <div className="h-[4vmax] bg-white mb-3 flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]"></div>
-                         <div className="h-[4vmax] bg-white mb-3 flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]"></div>
-                         <div className="h-[4vmax] bg-white mb-3 flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]"></div>
-                         <div className="h-[4vmax] bg-white mb-3 flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]"></div>
-                         <div className="h-[4vmax] bg-white mb-3 flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]"></div>
-                         <div className="h-[4vmax] bg-white mb-3 flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]"></div>
-                         <div className="h-[4vmax] bg-white mb-3 flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]"></div>
+                            <ActionCard/>
+
                      </div>
                 </div>
 
@@ -49,13 +46,8 @@ function ActionLib({ }) {
                       </div>
 
                      <div className="h-full flex flex-col overflow-y-auto pt-[0.5vmax] pl-[2vmax] pr-[1vmax]">
-                         <div className="h-[4vmax] bg-white mb-3 flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]"></div>
-                         <div className="h-[4vmax] bg-white mb-3 flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]"></div>
-                         <div className="h-[4vmax] bg-white mb-3 flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]"></div>
-                         <div className="h-[4vmax] bg-white mb-3 flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]"></div>
-                         <div className="h-[4vmax] bg-white mb-3 flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]"></div>
-                         <div className="h-[4vmax] bg-white mb-3 flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]"></div>
-                         <div className="h-[4vmax] bg-white mb-3 flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]"></div>
+                         <ActionCard/>
+
                      </div>
                 </div>
 
@@ -66,13 +58,8 @@ function ActionLib({ }) {
                       </div>
 
                      <div className="h-full flex flex-col overflow-y-auto pt-[0.5vmax] pl-[2vmax] pr-[1vmax]">
-                         <div className="h-[4vmax] bg-white mb-3 flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]"></div>
-                         <div className="h-[4vmax] bg-white mb-3 flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]"></div>
-                         <div className="h-[4vmax] bg-white mb-3 flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]"></div>
-                         <div className="h-[4vmax] bg-white mb-3 flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]"></div>
-                         <div className="h-[4vmax] bg-white mb-3 flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]"></div>
-                         <div className="h-[4vmax] bg-white mb-3 flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]"></div>
-                         <div className="h-[4vmax] bg-white mb-3 flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]"></div>
+                         <ActionCard/>
+
                      </div>
                 </div>
             </div>

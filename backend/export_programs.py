@@ -125,7 +125,7 @@ def export_installed_programs(json_output_file=None):
 
     # Создаем имя файла с датой, если не указано
     if json_output_file is None:
-        json_output_file = f"installed_programs.json"
+        json_output_file = f"./config/installed_programs.json"
 
     # Полный путь к файлу (в папке скрипта)
     full_path = os.path.join(script_dir, json_output_file)
@@ -208,10 +208,9 @@ def export_installed_programs(json_output_file=None):
 if __name__ == "__main__":
     try:
         export_installed_programs()
-        input("\nНажмите Enter для выхода...")
+
     except Exception as e:
         print(f"\nОШИБКА: {e}")
         import traceback
 
         traceback.print_exc()
-        input("\nНажмите Enter для выхода...")

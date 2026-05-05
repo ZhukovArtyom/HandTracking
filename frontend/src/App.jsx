@@ -16,6 +16,8 @@ function App() {
   const [cursorMenuOpen, setCursorMenuOpen] = useState(false)
   const [gestureMenuOpen, setGestureMenuOpen] = useState(false)
 
+  const [showAddGestureForm, setShowAddGestureForm] = useState(false)
+
   const cursorMenuRef = useRef(null)
   const gestureMenuRef = useRef(null)
 
@@ -36,6 +38,15 @@ function App() {
 
   const [pythonStatus, setPythonStatus] = useState('ОСТАНОВЛЕНО') // 'ОСТАНОВЛЕНО', 'ЗАПУСКАЕТСЯ...', 'ЗАПУЩЕНО'
   const [fps, setFps] = useState(0)
+
+
+  const handleOpenAddGesture = () => {
+    setShowAddGestureForm(true)
+  }
+
+  const handleCloseAddGesture = () => {
+    setShowAddGestureForm(false)
+  }
 
   // Загрузка жестов из файла
   const loadGestures = async () => {
@@ -506,172 +517,191 @@ function App() {
           </div>
         </div>
 
-        <NewGestureMenu/>
+        {showAddGestureForm ? (
+            <NewGestureMenu
 
-        {/* <div class="h-[49vmax] w-full ml-[2vmax] bg-white rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]">
-          <div class="w-full h-[5vmax] border-b-2 border-gray-300 flex items-center">
-            <div class="h-5/10 flex items-center ml-[0.5vmax]">
-              <img src={config_img} class="h-full m-2" alt="config" />
-              <p class="text-[2vmax]">Конфигурация</p>
+              onCancel={handleCloseAddGesture}
+            />
+          ) : (
+
+
+            <div class="h-[49vmax] w-full ml-[2vmax] bg-white rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)]">
+              <div class="w-full h-[5vmax] border-b-2 border-gray-300 flex items-center">
+                <div class="h-5/10 flex items-center ml-[0.5vmax]">
+                  <img src={config_img} class="h-full m-2" alt="config" />
+                  <p class="text-[2vmax]">Конфигурация</p>
+                </div>
+              </div>
+
+              <div class="relative inline-block w-full" ref={cursorMenuRef}>
+                <button
+                  onClick={() => setCursorMenuOpen(!cursorMenuOpen)}
+                  class="h-[4vmax] w-full text-black border-b border-gray-300 transition flex items-center"
+                >
+                  <div class="h-5/10 flex items-center ml-[2vmax]">
+                    <img src={cursor_img} class="h-full m-2" alt="cursor" />
+                    <p class="text-[1.7vmax]">Управление курсором</p>
+                  </div>
+                </button>
+                {cursorMenuOpen && (
+                  <div class="w-full text-xs">
+                    <div class="px-[3vmax] py-[0.5vmax]">
+                        <div class="h-[4vmax] flex items-center justify-between">
+                          <p class="text-[1.5vmax]">РАЗМЕР ОБЛАСТИ ОТСЛЕЖИВАНИЯ</p>
+                          <p class="text-[1.5vmax] text-[rgb(6,207,249)] font-bold">{trackingSize}%</p>
+                        </div>
+                        <div class="h-[4vmax] flex items-center">
+                          <input
+                            id="sensetivity_zone_size"
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={trackingSize}
+                            onChange={(e) => handleTrackingSizeChange(Number(e.target.value))}
+                            class="h-full w-full"
+                          />
+                        </div>
+                    </div>
+                    <div class="px-[3vmax] py-[0.5vmax]">
+                        <div class="h-[4vmax] flex items-center justify-between">
+                          <p class="text-[1.5vmax]">СГЛАЖИВАНИЕ</p>
+                          <p class="text-[1.5vmax] text-[rgb(6,207,249)] font-bold">{smoothingLevel}%</p>
+                        </div>
+                        <div class="h-[4vmax] flex items-center">
+                          <input
+                            id="smoothing_level"
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={smoothingLevel}
+                            onChange={(e) => handleSmoothingLevelChange(Number(e.target.value))}
+                            class="h-full w-full"
+                          />
+                        </div>
+                    </div>
+                    <div class="px-[3vmax] py-[0.5vmax]">
+                        <div class="h-[4vmax] flex items-center">
+                          <p class="text-[1.5vmax]">ОСНОВНАЯ РУКА</p>
+                        </div>
+                        <div class="h-[4vmax] rounded-xl border border-gray-300 flex items-center p-[2px]">
+                          <button
+                            onClick={() => handleControlHandChange('left')}
+                            className={`w-1/2 h-full text-[2vmax] mr-[2px] rounded-xl transition-colors ${
+                              controlHand === 'left'
+                                ? 'bg-[rgb(6,207,249)] text-white'
+                                : 'bg-white text-[rgb(6,207,249)]'
+                            }`}
+                          >
+                            Левая
+                          </button>
+                          <button
+                            onClick={() => handleControlHandChange('right')}
+                            className={`w-1/2 h-full text-[2vmax] rounded-xl transition-colors ${
+                              controlHand === 'right'
+                                ? 'bg-[rgb(6,207,249)] text-white'
+                                : 'bg-white text-[rgb(6,207,249)]'
+                            }`}
+                          >
+                            Правая
+                          </button>
+                        </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div class="relative inline-block w-full" ref={gestureMenuRef}>
+                <button
+                  onClick={() => setGestureMenuOpen(!gestureMenuOpen)}
+                  class="h-[4vmax] w-full text-black border-b border-gray-300 transition flex items-center"
+                >
+                  <div class="h-5/10 flex items-center ml-[2vmax]">
+                    <img src={hand_blue_bg_img} class="h-full m-2" alt="gestures" />
+                    <p class="text-[1.7vmax]">Распознавание жестов</p>
+                  </div>
+                </button>
+                {gestureMenuOpen && (
+                  <div class="w-full">
+                    <div class="px-[3vmax] py-[0.5vmax]">
+                        <div class="h-[4vmax] flex items-center justify-between">
+                          <p class="text-[1.3vmax]">ЧУВСТВИТЕЛЬНОСТЬ РАСПОЗНАВАНИЯ ЖЕСТОВ</p>
+                          <p class="text-[1.5vmax] text-[rgb(6,207,249)] font-bold">{gestureSensitivity}%</p>
+                        </div>
+                        <div class="h-[4vmax] flex items-center">
+                          <input
+                            id="gesture_sensitivity"
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={gestureSensitivity}
+                            onChange={(e) => handleGestureSensitivityChange(Number(e.target.value))}
+                            class="h-full w-full"
+                          />
+                        </div>
+                    </div>
+                    <div class="px-[3vmax] py-[0.5vmax]">
+                        <div class="h-[4vmax] flex items-center justify-between">
+                          <p class="text-[1.3vmax]">ЗАДЕРЖКА СРАБАТЫВАНИЯ ЖЕСТОВ</p>
+                          <p class="text-[1.5vmax] text-[rgb(6,207,249)] font-bold">{activationDelay} сек.</p>
+                        </div>
+                        <div class="h-[4vmax] flex items-center">
+                          <input
+                            id="activation_delay"
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.01"
+                            value={activationDelay}
+                            onChange={(e) => handleActivationDelayChange(Number(e.target.value))}
+                            class="h-full w-full"
+                          />
+                        </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
-          <div class="relative inline-block w-full" ref={cursorMenuRef}>
-            <button
-              onClick={() => setCursorMenuOpen(!cursorMenuOpen)}
-              class="h-[4vmax] w-full text-black border-b border-gray-300 transition flex items-center"
-            >
-              <div class="h-5/10 flex items-center ml-[2vmax]">
-                <img src={cursor_img} class="h-full m-2" alt="cursor" />
-                <p class="text-[1.7vmax]">Управление курсором</p>
-              </div>
-            </button>
-            {cursorMenuOpen && (
-              <div class="w-full text-xs">
-                <div class="px-[3vmax] py-[0.5vmax]">
-                    <div class="h-[4vmax] flex items-center justify-between">
-                      <p class="text-[1.5vmax]">РАЗМЕР ОБЛАСТИ ОТСЛЕЖИВАНИЯ</p>
-                      <p class="text-[1.5vmax] text-[rgb(6,207,249)] font-bold">{trackingSize}%</p>
-                    </div>
-                    <div class="h-[4vmax] flex items-center">
-                      <input
-                        id="sensetivity_zone_size"
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={trackingSize}
-                        onChange={(e) => handleTrackingSizeChange(Number(e.target.value))}
-                        class="h-full w-full"
-                      />
-                    </div>
-                </div>
-                <div class="px-[3vmax] py-[0.5vmax]">
-                    <div class="h-[4vmax] flex items-center justify-between">
-                      <p class="text-[1.5vmax]">СГЛАЖИВАНИЕ</p>
-                      <p class="text-[1.5vmax] text-[rgb(6,207,249)] font-bold">{smoothingLevel}%</p>
-                    </div>
-                    <div class="h-[4vmax] flex items-center">
-                      <input
-                        id="smoothing_level"
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={smoothingLevel}
-                        onChange={(e) => handleSmoothingLevelChange(Number(e.target.value))}
-                        class="h-full w-full"
-                      />
-                    </div>
-                </div>
-                <div class="px-[3vmax] py-[0.5vmax]">
-                    <div class="h-[4vmax] flex items-center">
-                      <p class="text-[1.5vmax]">ОСНОВНАЯ РУКА</p>
-                    </div>
-                    <div class="h-[4vmax] rounded-xl border border-gray-300 flex items-center p-[2px]">
-                      <button
-                        onClick={() => handleControlHandChange('left')}
-                        className={`w-1/2 h-full text-[2vmax] mr-[2px] rounded-xl transition-colors ${
-                          controlHand === 'left'
-                            ? 'bg-[rgb(6,207,249)] text-white'
-                            : 'bg-white text-[rgb(6,207,249)]'
-                        }`}
-                      >
-                        Левая
-                      </button>
-                      <button
-                        onClick={() => handleControlHandChange('right')}
-                        className={`w-1/2 h-full text-[2vmax] rounded-xl transition-colors ${
-                          controlHand === 'right'
-                            ? 'bg-[rgb(6,207,249)] text-white'
-                            : 'bg-white text-[rgb(6,207,249)]'
-                        }`}
-                      >
-                        Правая
-                      </button>
-                    </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div class="relative inline-block w-full" ref={gestureMenuRef}>
-            <button
-              onClick={() => setGestureMenuOpen(!gestureMenuOpen)}
-              class="h-[4vmax] w-full text-black border-b border-gray-300 transition flex items-center"
-            >
-              <div class="h-5/10 flex items-center ml-[2vmax]">
-                <img src={hand_blue_bg_img} class="h-full m-2" alt="gestures" />
-                <p class="text-[1.7vmax]">Распознавание жестов</p>
-              </div>
-            </button>
-            {gestureMenuOpen && (
-              <div class="w-full">
-                <div class="px-[3vmax] py-[0.5vmax]">
-                    <div class="h-[4vmax] flex items-center justify-between">
-                      <p class="text-[1.3vmax]">ЧУВСТВИТЕЛЬНОСТЬ РАСПОЗНАВАНИЯ ЖЕСТОВ</p>
-                      <p class="text-[1.5vmax] text-[rgb(6,207,249)] font-bold">{gestureSensitivity}%</p>
-                    </div>
-                    <div class="h-[4vmax] flex items-center">
-                      <input
-                        id="gesture_sensitivity"
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={gestureSensitivity}
-                        onChange={(e) => handleGestureSensitivityChange(Number(e.target.value))}
-                        class="h-full w-full"
-                      />
-                    </div>
-                </div>
-                <div class="px-[3vmax] py-[0.5vmax]">
-                    <div class="h-[4vmax] flex items-center justify-between">
-                      <p class="text-[1.3vmax]">ЗАДЕРЖКА СРАБАТЫВАНИЯ ЖЕСТОВ</p>
-                      <p class="text-[1.5vmax] text-[rgb(6,207,249)] font-bold">{activationDelay} сек.</p>
-                    </div>
-                    <div class="h-[4vmax] flex items-center">
-                      <input
-                        id="activation_delay"
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.01"
-                        value={activationDelay}
-                        onChange={(e) => handleActivationDelayChange(Number(e.target.value))}
-                        class="h-full w-full"
-                      />
-                    </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div> */}
       </div>
 
 
       <div class="w-full h-[38vmax] flex flex-col mt-[2vmax]">
 
-        <ActionLib/>
+        {showAddGestureForm ? (
+            <ActionLib/>
+          ) : (
 
-        {/* <div class="w-full h-[4vmax] px-[2vmax] flex justify-between">
-            <div class="h-full flex items-center">
-              <img src={hand_white_bg_img} class="h-full" />
-              <p class="text-[1.5vmax] ml-2">Библиотека жестов</p>
-            </div>
-            <button class="px-[3vmax] text-[1.2vmax] text-[rgb(6,207,249)] border-2 border-[rgb(6,207,249)] rounded-xl">
-              + ДОБАВИТЬ ЖЕСТ
-            </button>
-        </div>
+            <>
+                <div class="w-full h-[4vmax] px-[2vmax] flex justify-between">
+                    <div class="h-full flex items-center">
+                      <img src={hand_white_bg_img} class="h-full" />
+                      <p class="text-[1.5vmax] ml-2">Библиотека жестов</p>
+                    </div>
+                    <button
 
-        <div id="gestureLibrary" class="h-full flex overflow-x-auto  ml-[2vmax] mr-[2vmax] mb-[1vmax] pt-[2vmax] pb-[2vmax]">
-                {gestures.map((gesture) => (
-                    <GestureCard
-                      key={gesture.id}
-                      gesture={gesture}
-                      onToggle={handleGestureToggle}
-                      onEdit={handleGestureEdit}
-                      onDelete={() => handleGestureDelete(gesture.id)}
-                    />
-                ))}
-        </div> */}
+                        onClick={() => setShowAddGestureForm(true)}
+                        className="px-[3vmax] text-[1.2vmax] text-[rgb(6,207,249)] border-2 border-[rgb(6,207,249)] rounded-xl"
+                    >
+                        + ДОБАВИТЬ ЖЕСТ
+                    </button>
+                </div>
+
+                <div id="gestureLibrary" class="h-full flex overflow-x-auto  ml-[2vmax] mr-[2vmax] mb-[1vmax] pt-[2vmax] pb-[2vmax]">
+                        {gestures.map((gesture) => (
+                            <GestureCard
+                              key={gesture.id}
+                              gesture={gesture}
+                              onToggle={handleGestureToggle}
+                              onEdit={handleGestureEdit}
+                              onDelete={() => handleGestureDelete(gesture.id)}
+                            />
+                        ))}
+                </div>
+            </>
+
+        )}
+
       </div>
       <div class="w-full h-[3vmax] border-t-2 border-gray-300">
                 {/*   Подвал */}

@@ -66,8 +66,8 @@
   },
   {
     "name": "Microsoft Edge",
-    "path": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\147.0.3912.72\\msedge.exe",
-    "icon": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\147.0.3912.72\\msedge.exe"
+    "path": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\147.0.3912.98\\msedge.exe",
+    "icon": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\147.0.3912.98\\msedge.exe"
   },
   {
     "name": "Microsoft Help Viewer 2.3",
@@ -76,8 +76,8 @@
   },
   {
     "name": "Microsoft OneDrive",
-    "path": "C:\\Users\\Артем\\AppData\\Local\\Microsoft\\OneDrive\\26.055.0323.0004\\OneDriveSetup.exe",
-    "icon": "C:\\Users\\Артем\\AppData\\Local\\Microsoft\\OneDrive\\26.055.0323.0004\\OneDriveSetup.exe"
+    "path": "C:\\Users\\Артем\\AppData\\Local\\Microsoft\\OneDrive\\26.062.0402.0002\\OneDriveSetup.exe",
+    "icon": "C:\\Users\\Артем\\AppData\\Local\\Microsoft\\OneDrive\\26.062.0402.0002\\OneDriveSetup.exe"
   },
   {
     "name": "Microsoft SQL Server Management Studio - 20.1",
@@ -406,7 +406,7 @@
   },
   {
     "name": "Среда выполнения Microsoft Edge WebView2 Runtime",
-    "path": "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\147.0.3912.72\\msedgewebview2.exe",
-    "icon": "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\147.0.3912.72\\msedgewebview2.exe"
+    "path": "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\147.0.3912.98\\msedgewebview2.exe",
+    "icon": "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\147.0.3912.98\\msedgewebview2.exe"
   }
 ]
