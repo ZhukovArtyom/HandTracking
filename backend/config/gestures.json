@@ -61,9 +61,9 @@
           "second_8"
         ]
       ],
-      "type": "keyboard",
-      "on_press": "ctrl",
-      "on_release": "ctrl"
+      "type": "program",
+      "on_press": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Accessories\\Paint.lnk",
+      "on_release": ""
     },
     {
       "id": "right_click",

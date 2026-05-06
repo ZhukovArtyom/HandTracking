@@ -1,6 +1,7 @@
 import json
 import time
 import threading
+import os
 import numpy as np
 import win32api
 import win32con
@@ -366,8 +367,13 @@ class GestureRecognizer:
 
         elif gesture_type == "program":
             if not on_release:
-                action = gesture['on_press']
-                subprocess.Popen([action])
+                path = gesture['on_press']
+                if path.startswith('C'):
+                    os.startfile(path)
+                else:
+                    subprocess.run(f'explorer.exe shell:AppsFolder\\{path}', shell=True)
+
+
             else:
                 return
 

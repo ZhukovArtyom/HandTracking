@@ -82,10 +82,7 @@ CTRL_ALT_COMBINATIONS = [
 
 # Популярные сочетания
 POPULAR_COMBINATIONS = [
-    'ctrl+c', 'ctrl+v', 'ctrl+x', 'ctrl+z', 'ctrl+y',
-    'ctrl+a', 'ctrl+s', 'ctrl+f', 'ctrl+h', 'ctrl+g',
-    'ctrl+b', 'ctrl+i', 'ctrl+u', 'ctrl+p', 'ctrl+o',
-    'ctrl+n', 'ctrl+w', 'ctrl+t', 'ctrl+r', 'ctrl+e',
+
     'alt+f4', 'alt+tab', 'alt+space', 'alt+enter',
     'ctrl+shift+esc', 'ctrl+alt+del', 'windows+r',
     'windows+e', 'windows+d', 'windows+tab',
