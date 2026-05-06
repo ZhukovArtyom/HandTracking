@@ -22,5 +22,17 @@
     "name": "Прокрутка вниз",
     "on_press": "wheel_down",
     "on_release": ""
+  },
+  {
+    "id": "volume_up",
+    "name": "Громкость +",
+    "on_press": "volume_up",
+    "on_release": ""
+  },
+  {
+    "id": "volume_down",
+    "name": "Громкость -",
+    "on_press": "volume_down",
+    "on_release": ""
   }
 ]

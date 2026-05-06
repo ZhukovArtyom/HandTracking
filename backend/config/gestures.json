@@ -80,10 +80,41 @@
           "main_12"
         ]
       ],
-      "hand": "right",
       "type": "system",
       "on_press": "right_click_press",
       "on_release": "right_click_release"
+    },
+    {
+      "id": "volume_up",
+      "name": "Касание указательного пальца",
+      "action_name": "Громкость +",
+      "image": "",
+      "enabled": true,
+      "points_groups": [
+        [
+          "main_8",
+          "second_8"
+        ]
+      ],
+      "type": "system",
+      "on_press": "volume_up",
+      "on_release": ""
+    },
+    {
+      "id": "volume_down",
+      "name": "Касание большого пальца",
+      "action_name": "Громкость -",
+      "image": "",
+      "enabled": true,
+      "points_groups": [
+        [
+          "main_4",
+          "second_8"
+        ]
+      ],
+      "type": "system",
+      "on_press": "volume_down",
+      "on_release": ""
     }
   ]
 }
