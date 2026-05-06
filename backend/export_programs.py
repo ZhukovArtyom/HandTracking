@@ -105,7 +105,6 @@ def main():
 
         print(f"✅ Сохранено в 'start_menu_programs_with_real_paths.json'")
 
-
     else:
         print("❌ Не удалось получить список программ")
 
