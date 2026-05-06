@@ -1,25 +1,6 @@
 {
   "gestures": [
-    {
-      "id": "screenshot",
-      "name": "Жест рамка",
-      "action_name": "Сделать скриншот",
-      "image": "",
-      "enabled": true,
-      "points_groups": [
-        [
-          "main_8",
-          "second_4"
-        ],
-        [
-          "main_4",
-          "second_8"
-        ]
-      ],
-      "type": "keyboard",
-      "on_press": "print screen",
-      "on_release": ""
-    },
+
     {
       "id": "wheel_up",
       "name": "Щипок большой+безымянный",
@@ -69,9 +50,9 @@
       "on_release": "left_click_release"
     },
     {
-      "id": "double_click",
+      "id": "shift",
       "name": "Щипок неосновной",
-      "action_name": "Двойной клик",
+      "action_name": "Shift",
       "image": "",
       "enabled": true,
       "points_groups": [
@@ -80,9 +61,9 @@
           "second_8"
         ]
       ],
-      "type": "system",
-      "on_press": "double_click",
-      "on_release": ""
+      "type": "keyboard",
+      "on_press": "ctrl",
+      "on_release": "ctrl"
     },
     {
       "id": "right_click",
@@ -99,38 +80,6 @@
       "type": "system",
       "on_press": "right_click_press",
       "on_release": "right_click_release"
-    },
-    {
-      "id": "volume_up",
-      "name": "Касание указательного пальца",
-      "action_name": "Громкость +",
-      "image": "",
-      "enabled": true,
-      "points_groups": [
-        [
-          "main_8",
-          "second_8"
-        ]
-      ],
-      "type": "system",
-      "on_press": "volume_up",
-      "on_release": ""
-    },
-    {
-      "id": "volume_down",
-      "name": "Касание большого пальца",
-      "action_name": "Громкость -",
-      "image": "",
-      "enabled": true,
-      "points_groups": [
-        [
-          "main_4",
-          "second_8"
-        ]
-      ],
-      "type": "system",
-      "on_press": "volume_down",
-      "on_release": ""
     }
   ]
 }

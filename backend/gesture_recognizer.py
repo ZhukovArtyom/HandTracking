@@ -27,14 +27,42 @@ class GestureRecognizer:
         self.gestures = []
         self.active_gestures = {}  # {gesture_id: {'start_time': timestamp, 'hold_activated': False}}
         self.pending_gestures = {}  # {gesture_id: {'timer': timer_object, 'gesture': gesture, 'first_detected': timestamp}}
-        self.blocked_until_release = False  # Флаг блокировки других жестов
-        self.blocking_gesture_id = None  # ID жеста, который блокирует остальные
+
+
+        self.global_blocked = False  # Глобальная блокировка для двуручных жестов
+        self.global_blocking_gesture_id = None
+
+        # Блокировка по рукам (для одноручных жестов)
+        self.hand_blocked = {'main': False, 'second': False}
+        self.hand_blocking_gesture = {'main': None, 'second': None}
+
 
         self.last_execution_time = {}  # {gesture_id: last_execution_timestamp}
         self.lock = threading.Lock()
 
         # Загружаем жесты из файла
         self.load_gestures()
+
+
+    def get_gesture_hand_type(self, gesture):
+
+        has_main = False
+        has_second = False
+
+        # Определяем, какая рука используется
+        for point_group in gesture['points_groups']:
+            for point_spec in point_group:
+                if point_spec.startswith('main'):
+                    has_main = True
+                if point_spec.startswith('second'):
+                    has_second = True
+
+        if has_main and has_second:
+            return 'both'
+        elif has_main and not has_second:
+            return 'main'
+        else:
+            return 'second'
 
     def update_control_hand(self, new_control_hand):
         """Обновляет контрольную руку для жестов"""
@@ -140,6 +168,44 @@ class GestureRecognizer:
             del self.pending_gestures[gesture_id]
             print(f"Жест отменен до активации")
 
+    def can_execute_gesture(self, gesture):
+        """Проверяет, можно ли выполнить жест с учётом текущих блокировок"""
+        gesture_hand = self.get_gesture_hand_type(gesture)
+
+        if self.global_blocked:
+            return False
+
+        if gesture_hand == 'both':
+            return not self.hand_blocked['main'] and not self.hand_blocked['second']
+
+        # Если жест одноручный - проверяем блокировку только на этой руке
+        return not self.hand_blocked[gesture_hand]
+
+    def block_gesture(self, gesture):
+
+        gesture_hand = self.get_gesture_hand_type(gesture)
+
+        if gesture_hand == 'both':
+            self.global_blocked = True
+            self.global_blocking_gesture_id = gesture['id']
+        else:
+            self.hand_blocked[gesture_hand] = True
+            self.hand_blocking_gesture[gesture_hand] = gesture['id']
+
+    def unblock_gesture(self, gesture):
+
+        gesture_hand = self.get_gesture_hand_type(gesture)
+
+        if gesture_hand == 'both':
+            self.global_blocked = False
+            self.global_blocking_gesture_id = None
+
+        else:
+            self.hand_blocked[gesture_hand] = False
+            self.hand_blocking_gesture[gesture_hand] = None
+
+
+
     def execute_after_delay(self, gesture, current_time):
         """Выполняет жест после задержки"""
         gesture_id = gesture['id']
@@ -149,17 +215,17 @@ class GestureRecognizer:
             # Убираем из pending до выполнения
             del self.pending_gestures[gesture_id]
 
+            if not self.can_execute_gesture(gesture):
+                return
+
             # Выполняем действие
             self.active_gestures[gesture_id] = {
                 'start_time': current_time,
-                'hold_activated': False
+                'hold_activated': False,
+                'hand_type': self.get_gesture_hand_type(gesture)
             }
 
-            # Устанавливаем блокировку для других жестов
-            if not self.blocked_until_release:
-                self.blocked_until_release = True
-                self.blocking_gesture_id = gesture_id
-                print(f"=== Жест {gesture['name']} заблокировал другие жесты ===")
+            self.block_gesture(gesture)
 
             print(f"Жест активирован: {gesture['name']}")
             self._perform_action(gesture)
@@ -173,8 +239,8 @@ class GestureRecognizer:
         if gesture_id in self.active_gestures:
             return False
 
-        # Если есть активный блокирующий жест и это не тот же жест
-        if self.blocked_until_release and self.blocking_gesture_id != gesture_id:
+        # Можем ли выполнить жест?
+        if not self.can_execute_gesture(gesture):
             return False
 
         # Если жест уже в очереди ожидания - просто возвращаемся, не обновляем таймер
@@ -183,7 +249,6 @@ class GestureRecognizer:
 
         # Если есть другой отложенный жест - отменяем его и запускаем новый
         if self.pending_gestures:
-            print(f"Обнаружен новый жест, отмена предыдущего")
             for pending_id in list(self.pending_gestures.keys()):
                 self.cancel_pending_gesture(pending_id)
 
@@ -192,15 +257,12 @@ class GestureRecognizer:
             print(f"Жест {gesture['name']} активирован мгновенно")
             self.active_gestures[gesture_id] = {
                 'start_time': current_time,
-                'hold_activated': False
+                'hold_activated': False,
+                'hand_type': self.get_gesture_hand_type(gesture)
             }
 
-            if not self.blocked_until_release:
-                self.blocked_until_release = True
-                self.blocking_gesture_id = gesture_id
-                print(f"=== Жест {gesture['name']} заблокировал другие жесты ===")
+            self.block_gesture(gesture)
 
-            print(f"Жест активирован: {gesture['name']}")
             self._perform_action(gesture)
             self.last_execution_time[gesture_id] = current_time
             return True
@@ -216,7 +278,7 @@ class GestureRecognizer:
             'first_detected': current_time
         }
 
-        print(f"Жест {gesture['name']} обнаружен, активация через {ACTIVATION_DELAY} секунд")
+
         return True
 
     def on_gesture_release(self, gesture_id):
@@ -232,14 +294,9 @@ class GestureRecognizer:
             # Находим жест по ID
             for gesture in self.gestures:
                 if gesture['id'] == gesture_id:
-                    print(f"Жест деактивирован: {gesture['name']}")
-                    self._perform_action(gesture, True)
 
-                    # Снимаем блокировку, если это был блокирующий жест
-                    if self.blocking_gesture_id == gesture_id:
-                        self.blocked_until_release = False
-                        self.blocking_gesture_id = None
-                        print(f"=== Блокировка жестов снята ===")
+                    self._perform_action(gesture, True)
+                    self.unblock_gesture(gesture)
                     break
 
             del self.active_gestures[gesture_id]
@@ -301,11 +358,11 @@ class GestureRecognizer:
                 print(f"Неизвестное действие: {action}")
 
         elif gesture_type == "keyboard":
+            action = gesture['on_press'] if not on_release else gesture['on_release']
             if not on_release:
-                action = gesture['on_press']
-                keyboard.send(action)
+                keyboard.press(action)
             else:
-                return
+                keyboard.release(action)
 
         elif gesture_type == "program":
             if not on_release:
@@ -334,12 +391,12 @@ class GestureRecognizer:
 
                 for gesture_id in list(self.active_gestures.keys()):
                     self.on_gesture_release(gesture_id)
+
                 self.active_gestures.clear()
-
-                if self.blocked_until_release:
-                    self.blocked_until_release = False
-                    self.blocking_gesture_id = None
-
+                self.global_blocked = False
+                self.global_blocking_gesture_id = None
+                self.hand_blocked = {'main': False, 'second': False}
+                self.hand_blocking_gesture = {'main': None, 'second': None}
             return
 
         current_time = time.time()
@@ -367,13 +424,13 @@ class GestureRecognizer:
         """Перезагружает жесты из файла"""
         self.load_gestures()
         with self.lock:
-            # Отменяем все отложенные жесты
             for gesture_id in list(self.pending_gestures.keys()):
                 self.cancel_pending_gesture(gesture_id)
-
             for gesture_id in list(self.active_gestures.keys()):
                 self.on_gesture_release(gesture_id)
             self.active_gestures.clear()
             self.last_execution_time.clear()
-            self.blocked_until_release = False
-            self.blocking_gesture_id = None
+            self.global_blocked = False
+            self.global_blocking_gesture_id = None
+            self.hand_blocked = {'main': False, 'second': False}
+            self.hand_blocking_gesture = {'main': None, 'second': None}
