@@ -21,7 +21,7 @@
       "on_release": ""
     },
     {
-      "id": "mouse_up",
+      "id": "wheel_up",
       "name": "Щипок большой+безымянный",
       "action_name": "Прокрутка вверх",
       "image": "",
@@ -37,7 +37,7 @@
       "on_release": ""
     },
     {
-      "id": "mouse_down",
+      "id": "wheel_down",
       "name": "Щипок большой+мизинец",
       "action_name": "Прокрутка вниз",
       "image": "",
@@ -67,6 +67,22 @@
       "type": "system",
       "on_press": "left_click_press",
       "on_release": "left_click_release"
+    },
+    {
+      "id": "double_click",
+      "name": "Щипок неосновной",
+      "action_name": "Двойной клик",
+      "image": "",
+      "enabled": true,
+      "points_groups": [
+        [
+          "second_4",
+          "second_8"
+        ]
+      ],
+      "type": "system",
+      "on_press": "double_click",
+      "on_release": ""
     },
     {
       "id": "right_click",

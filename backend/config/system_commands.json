@@ -6,6 +6,12 @@
     "on_release": "left_click_release"
   },
   {
+    "id": "double_click",
+    "name": "Двойной клик",
+    "on_press": "double_click",
+    "on_release": ""
+  },
+  {
     "id": "right_click",
     "name": "Клик ПКМ",
     "on_press": "right_click_press",
@@ -34,5 +40,11 @@
     "name": "Громкость -",
     "on_press": "volume_down",
     "on_release": ""
+  },
+  {
+    "id": "wheel_click",
+    "name": "Клик колёсиком",
+    "on_press": "wheel_press",
+    "on_release": "wheel_release"
   }
 ]
