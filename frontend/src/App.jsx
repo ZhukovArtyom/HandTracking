@@ -18,6 +18,10 @@ function App() {
 
   const [showAddGestureForm, setShowAddGestureForm] = useState(false)
 
+  /*  Имя и действие нового жеста */
+  const [newGestureName, setNewGestureName] = useState('')
+  const [selectedGestureAction, setSelectedGestureAction] = useState(null)
+
   const cursorMenuRef = useRef(null)
   const gestureMenuRef = useRef(null)
 
@@ -39,6 +43,10 @@ function App() {
   const [pythonStatus, setPythonStatus] = useState('ОСТАНОВЛЕНО') // 'ОСТАНОВЛЕНО', 'ЗАПУСКАЕТСЯ...', 'ЗАПУЩЕНО'
   const [fps, setFps] = useState(0)
 
+   /* Установка действия для нового жеста */
+  const handleSelectAction = (action) => {
+      setSelectedGestureAction(action)
+  }
 
   const handleOpenAddGesture = () => {
     setShowAddGestureForm(true)
@@ -46,7 +54,68 @@ function App() {
 
   const handleCloseAddGesture = () => {
     setShowAddGestureForm(false)
+    setSelectedGestureAction(null)
+    setNewGestureName('')
   }
+
+  const handleSaveNewGesture = () => {
+
+
+      if (!newGestureName.trim()) {
+        // Вместо alert используем более мягкое уведомление
+        const inputElement = document.getElementById('gestureName')
+        if (inputElement) {
+          inputElement.style.borderColor = 'red'
+          setTimeout(() => {
+            inputElement.style.borderColor = ''
+          }, 1000)
+        }
+
+      }
+
+      if (!selectedGestureAction) {
+        const actionElement = document.getElementById('gestureAction')
+        if (actionElement) {
+          actionElement.style.borderColor = 'red'
+          setTimeout(() => {
+            actionElement.style.borderColor = ''
+          }, 1000)
+        }
+
+      }
+
+      if (!selectedGestureAction || !newGestureName.trim()) {
+          return
+      }
+
+      // Создаём новый жест
+      const newGesture = {
+          id: Date.now().toString(), // уникальный ID на основе времени
+          name: newGestureName,
+          action_name: selectedGestureAction.displayName,
+          image: "",
+          enabled: true,
+          points_groups: [],
+          type: selectedGestureAction.type,
+          on_press: selectedGestureAction.on_press,
+          on_release: selectedGestureAction.on_release || ""
+      }
+
+        // Добавляем в список жестов
+      const updatedGestures = [...gestures, newGesture]
+      setGestures(updatedGestures)
+
+        // Сохраняем в файл
+      if (window.electronAPI?.saveGestures) {
+        window.electronAPI.saveGestures({ gestures: updatedGestures })
+      }
+
+        // Очищаем форму и закрываем
+      setNewGestureName('')
+      setSelectedGestureAction(null)
+      setShowAddGestureForm(false)
+  }
+
 
   // Загрузка жестов из файла
   const loadGestures = async () => {
@@ -521,6 +590,11 @@ function App() {
             <NewGestureMenu
 
               onCancel={handleCloseAddGesture}
+              onSave={handleSaveNewGesture}
+              selectedAction={selectedGestureAction}
+              gestureName={newGestureName}
+              onGestureNameChange={setNewGestureName}
+
             />
           ) : (
 
@@ -669,7 +743,9 @@ function App() {
       <div class="w-full h-[38vmax] flex flex-col mt-[2vmax]">
 
         {showAddGestureForm ? (
-            <ActionLib/>
+            <ActionLib
+                onSelectAction={handleSelectAction}
+            />
           ) : (
 
             <>

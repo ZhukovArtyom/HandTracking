@@ -152,8 +152,8 @@ class AdvancedCursorController:
             PADDING = config.get('cursor.padding', PADDING)
 
             # Обновляем порог клика
-            new_threshold = config.get('gestures.click_distance_threshold', 0.036)
-            CLICK_DISTANCE_THRESHOLD = new_threshold / 100 * SENSITIVITY_ZONE_PERCENT
+
+            CLICK_DISTANCE_THRESHOLD = config.get('gestures.click_distance_threshold')
 
             # Обновляем сглаживание
             SMOOTHING_LEVEL = config.get('cursor.smoothing_level', SMOOTHING_LEVEL)

@@ -1,85 +1,39 @@
 {
   "gestures": [
-
     {
-      "id": "wheel_up",
-      "name": "Щипок большой+безымянный",
-      "action_name": "Прокрутка вверх",
-      "image": "",
-      "enabled": true,
-      "points_groups": [
-        [
-          "main_4",
-          "main_16"
-        ]
-      ],
-      "type": "system",
-      "on_press": "wheel_up",
-      "on_release": ""
-    },
-    {
-      "id": "wheel_down",
-      "name": "Щипок большой+мизинец",
-      "action_name": "Прокрутка вниз",
-      "image": "",
-      "enabled": true,
-      "points_groups": [
-        [
-          "main_4",
-          "main_20"
-        ]
-      ],
-      "type": "system",
-      "on_press": "wheel_down",
-      "on_release": ""
-    },
-    {
-      "id": "left_click",
-      "name": "Щипок большой+указательный",
+      "id": "1778244738839",
+      "name": "Щипок указательным",
       "action_name": "Клик ЛКМ",
       "image": "",
       "enabled": true,
       "points_groups": [
-        [
-          "main_4",
-          "main_8"
-        ]
+        ["main_4","main_8"]
       ],
       "type": "system",
       "on_press": "left_click_press",
       "on_release": "left_click_release"
     },
     {
-      "id": "shift",
-      "name": "Щипок неосновной",
-      "action_name": "Shift",
+      "id": "1778244756526",
+      "name": "Щипок средним",
+      "action_name": "Google Chrome",
       "image": "",
       "enabled": true,
-      "points_groups": [
-        [
-          "second_4",
-          "second_8"
-        ]
-      ],
+      "points_groups": [["main_4","main_12"]],
       "type": "program",
-      "on_press": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Accessories\\Paint.lnk",
+      "on_press": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Google Chrome.lnk",
       "on_release": ""
     },
     {
-      "id": "right_click",
-      "name": "Щипок большой+средний",
-      "action_name": "Клик ПКМ",
+      "id": "1778244779332",
+      "name": "Щипок безымянным",
+      "action_name": "home",
       "image": "",
       "enabled": true,
-      "points_groups": [
-        [
-          "main_4",
-          "main_12"
-        ]
-      ],
-      "type": "system",
-      "on_press": "right_click_press",
-      "on_release": "right_click_release"
+      "points_groups": [["main_4","main_16"]],
+      "type": "keyboard",
+      "on_press": "home",
+      "on_release": "home"
     }
   ]
 }

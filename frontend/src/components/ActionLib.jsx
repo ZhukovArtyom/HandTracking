@@ -9,7 +9,7 @@ import keyboardCommandsData from '../../../backend/config/keyboard_commands.json
 import installedProgramsData from '../../../backend/config/installed_programs.json';
 import systemCommandsData from '../../../backend/config/system_commands.json';
 
-function ActionLib({ }) {
+function ActionLib({ onSelectAction }) {
   const [keyboardCommands, setKeyboardCommands] = useState([]);
   const [installedPrograms, setInstalledPrograms] = useState([]);
   const [systemCommands, setSystemCommands] = useState([]);
@@ -41,6 +41,17 @@ function ActionLib({ }) {
       setLoading(false);
     }
   };
+
+   const handleCardClick = (displayName, on_press, on_release, type) => {
+     if (onSelectAction) {
+       onSelectAction({
+         displayName: displayName,
+         on_press: on_press,
+         on_release: on_release,
+         type: type
+       });
+     }
+   };
 
   // Фильтрация команд по поиску
   const filteredCommands = keyboardCommands.filter(command =>
@@ -91,6 +102,7 @@ function ActionLib({ }) {
                 <ActionCard
                   key={index}
                   command={command}
+                  onClick={() => handleCardClick(command, command, command, 'keyboard')}
                 />
               ))
             ) : (
@@ -115,6 +127,7 @@ function ActionLib({ }) {
                 <ActionCard
                   key={index}
                   command={program.name}
+                  onClick={() => handleCardClick(program.name, program.path,'', 'program')}
 
                 />
               ))
@@ -142,7 +155,7 @@ function ActionLib({ }) {
                     <ActionCard
                       key={index}
                       command={command.name}
-
+                      onClick={() => handleCardClick(command.name, command.on_press, command.on_release, 'system')}
                     />
                   ))
                 ) : (

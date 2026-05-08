@@ -12,8 +12,7 @@ from pynput.keyboard import Key, Controller
 
 from config_loader import config
 
-SENSITIVITY_ZONE_PERCENT = config.get('cursor.sensitivity_zone_percent')
-CLICK_DISTANCE_THRESHOLD = config.get('gestures.click_distance_threshold') / 100 * SENSITIVITY_ZONE_PERCENT
+CLICK_DISTANCE_THRESHOLD = config.get('gestures.click_distance_threshold')
 ACTIVATION_DELAY = config.get('gestures.activation_delay')
 
 
@@ -104,7 +103,7 @@ class GestureRecognizer:
 
     def calculate_distance(self, point1, point2):
         """Вычисляет расстояние между двумя точками"""
-        return np.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2) / 100 * SENSITIVITY_ZONE_PERCENT
+        return np.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2)
 
     def check_point_group(self, landmarks_dict, point_group):
         """

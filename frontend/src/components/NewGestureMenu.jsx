@@ -4,7 +4,7 @@ import action_img from '../assets/action_icon.png'
 import plus_img from '../assets/plus_icon.png'
 import hand_blue_bg_img from '../assets/hand_blue_bg.png'
 
-function NewGestureMenu({onCancel}) {
+function NewGestureMenu({onCancel, onSave, selectedAction, gestureName, onGestureNameChange}) {
 
 
   return (
@@ -35,10 +35,14 @@ function NewGestureMenu({onCancel}) {
                               <p class="text-[2vmax] pl-[1vmax]">Имя жеста</p>
                             </div>
 
-                            <p class="h-3/5 text-[1.7vmax] pl-[1vmax] border-1 border-gray-300 rounded-xl flex items-center">
-                                Действие
-
-                            </p>
+                            <input
+                                id="gestureName"
+                                type="text"
+                                value={gestureName}
+                                onChange={(e) => onGestureNameChange(e.target.value)}
+                                placeholder="Введите имя жеста"
+                                class="h-3/5 text-[1.7vmax] pl-[1vmax] border border-gray-300 rounded-xl flex items-center w-full focus:outline-none focus:border-[rgb(6,207,249)] focus:ring-1 focus:ring-[rgb(6,207,249)]"
+                              />
                       </div>
 
                       <div class="h-3/10 flex flex-col justify-between pb-[1.5vmax]">
@@ -47,14 +51,16 @@ function NewGestureMenu({onCancel}) {
                               <p class="text-[2vmax] pl-[1vmax]">Действие</p>
                             </div>
 
-                            <p class="h-3/5 text-[1.7vmax] pl-[1vmax] border-1 border-gray-300 rounded-xl flex items-center">
-                                Действие
+                            <p id="gestureAction" class="h-3/5 text-[1.7vmax] pl-[1vmax] border-1 border-gray-300 rounded-xl flex items-center">
+                                {selectedAction ? selectedAction.displayName : 'Выберите из библиотеки'}
                             </p>
 
                       </div>
 
                       <div class="h-1/10 flex justify-between">
-                            <button class="h-full w-1/2 text-[1.7vmax] bg-[rgb(6,207,249)] rounded-xl text-white ">
+                            <button
+                                onClick={onSave}
+                                class="h-full w-1/2 text-[1.7vmax] bg-[rgb(6,207,249)] rounded-xl text-white ">
                                     Сохранить
                             </button>
 

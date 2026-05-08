@@ -1,10 +1,12 @@
 // ActionCard.jsx
 import React from 'react';
 
-function ActionCard({ command, icon }) {
+function ActionCard({ command, icon, onClick }) {
 
   return (
-    <div className="min-h-[5vmax] h-auto bg-white mb-[1vmax] p-[0.5vmax] flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)] flex items-center cursor-pointer hover:shadow-[4px_4px_12px_rgba(0,0,0,0.3)] transition-all">
+    <div
+        onClick={onClick}
+        className="min-h-[5vmax] h-auto bg-white mb-[1vmax] p-[0.5vmax] flex-shrink-0 rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)] flex items-center cursor-pointer hover:shadow-[4px_4px_12px_rgba(0,0,0,0.3)] transition-all">
         {icon ? (
             <img src={icon} className="h-[4vmax] aspect-[1/1] ml-[1vmax] bg-black p-[0.5vmax] "/>
           ) : (
