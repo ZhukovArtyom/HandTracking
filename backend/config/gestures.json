@@ -1,39 +1,38 @@
 {
   "gestures": [
     {
-      "id": "1778244738839",
-      "name": "Щипок указательным",
-      "action_name": "Клик ЛКМ",
-      "image": "",
-      "enabled": true,
-      "points_groups": [
-        ["main_4","main_8"]
-      ],
-      "type": "system",
-      "on_press": "left_click_press",
-      "on_release": "left_click_release"
-    },
-    {
-      "id": "1778244756526",
-      "name": "Щипок средним",
+      "id": "1778255548669",
+      "name": "Загнутые пальцы",
       "action_name": "Google Chrome",
       "image": "",
       "enabled": true,
-      "points_groups": [["main_4","main_12"]],
+      "points_groups": [ ["main_12", "main_8"], ["main_12", "main_16"], ["main_16", "main_20"] ],
       "type": "program",
       "on_press": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Google Chrome.lnk",
       "on_release": ""
     },
     {
-      "id": "1778244779332",
-      "name": "Щипок безымянным",
-      "action_name": "home",
+      "id": "1778255702493",
+      "name": "Держим кисть",
+      "action_name": "Paint",
       "image": "",
       "enabled": true,
-      "points_groups": [["main_4","main_16"]],
-      "type": "keyboard",
-      "on_press": "home",
-      "on_release": "home"
+      "points_groups": [ ["main_4", "main_8", "main_12"] ],
+      "type": "program",
+      "on_press": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Accessories\\Paint.lnk",
+      "on_release": ""
+    },
+    {
+      "id": "1778255633768",
+      "name": "Щипок указательным",
+      "action_name": "Клик ЛКМ",
+      "image": "",
+      "enabled": true,
+      "points_groups": [ ["main_4", "main_8"] ],
+      "type": "system",
+      "on_press": "left_click_press",
+      "on_release": "left_click_release"
     }
+
   ]
 }

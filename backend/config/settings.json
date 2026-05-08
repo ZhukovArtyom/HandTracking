@@ -15,7 +15,7 @@
     "control_hand": "right"
   },
   "gestures": {
-    "click_distance_threshold": 0.035,
+    "click_distance_threshold": 0.03,
     "activation_delay": 0
   }
 }

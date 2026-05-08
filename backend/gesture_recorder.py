@@ -3,6 +3,7 @@ import mediapipe as mp
 import time
 import numpy as np
 import os
+import itertools
 
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
@@ -14,24 +15,13 @@ CAMERA_WIDTH = config.get('camera.width')
 CAMERA_HEIGHT = config.get('camera.height')
 MODEL_PATH = config.get('model.path')
 
-
-CLICK_DISTANCE_THRESHOLD = config.get('gestures.click_distance_threshold')
-
-# Радиус кружка точки
-
-
-# Цвета для разных рук
-COLOR_LEFT = (255, 0, 0)  # Синий для левой руки
-COLOR_RIGHT = (0, 255, 0)  # Зелёный для правой руки
+CLICK_DISTANCE_THRESHOLD = 0.05
 
 
 class HandTrackingVisualizer:
 
-    RADIUS = int(CAMERA_HEIGHT * CLICK_DISTANCE_THRESHOLD / 2)
 
     def __init__(self):
-
-
 
         print("\nИнициализация модели MediaPipe...")
 
@@ -40,8 +30,8 @@ class HandTrackingVisualizer:
             options = vision.HandLandmarkerOptions(
                 base_options=base_options,
                 num_hands=2,
-                min_hand_detection_confidence=0.5,
-                min_tracking_confidence=0.5
+                min_hand_detection_confidence=0.55,
+                min_tracking_confidence=0.45
             )
             self.landmarker = vision.HandLandmarker.create_from_options(options)
             print("✓ Модель успешно загружена")
@@ -67,20 +57,73 @@ class HandTrackingVisualizer:
         self.running = True
 
         # Статистика FPS
+        self.frame_count = 0
+        self.last_print_time = time.time()
 
+    def calculate_distance(self, point1, point2):
+        """Вычисляет расстояние между двумя точками в нормализованных координатах"""
+        return np.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2)
 
-    def draw_landmarks(self, frame, hand_landmarks, color):
-        """Рисует все точки руки на кадре"""
-        height, width = frame.shape[:2]
+    def find_intersecting_point_groups(self, landmarks_dict):
+        """
+        Находит группы точек, которые пересекаются (находятся ближе порога)
+        Использует только ключевые точки: 4,8,12,16,20,1,5,9,13,17
+        Возвращает список попарных групп точек в формате [["main_4", "main_8"], ["main_8", "main_12"], ...]
+        """
+        # Ключевые точки, которые участвуют в распознавании
+        KEY_POINTS = {4, 8, 12, 16, 20, 1}
 
-        for landmark in hand_landmarks:
-            # Преобразуем нормализованные координаты в пиксельные
-            x = int(landmark.x * width)
-            y = int(landmark.y * height)
+        # Собираем только ключевые точки из всех рук
+        all_points = []  # (hand_type, index, point_obj)
 
-            # Рисуем кружок
-            cv2.circle(frame, (x, y), self.RADIUS, color, cv2.FILLED)
-            # Добавляем обводку для лучшей видимости
+        for hand_type, landmarks in landmarks_dict.items():
+            if landmarks is not None:
+                for i, point in enumerate(landmarks):
+                    if i in KEY_POINTS:  # Фильтруем только ключевые точки
+                        all_points.append((hand_type, i, point))
+
+        if len(all_points) < 2:
+            return []
+
+        # Находим все пары точек, расстояние между которыми меньше порога
+        pairs = []
+        for i, (hand1, idx1, point1) in enumerate(all_points):
+            for j, (hand2, idx2, point2) in enumerate(all_points):
+                if i >= j:
+                    continue
+                distance = self.calculate_distance(point1, point2)
+                if distance <= CLICK_DISTANCE_THRESHOLD:
+                    pairs.append((i, j))
+
+        if not pairs:
+            return []
+
+        # Преобразуем hand_type в нужный формат (main - правая, second - левая)
+        def get_point_label(hand_type, index):
+            if hand_type == 'left':
+                return f"main_{index}"
+            else:
+                return f"second_{index}"
+
+        # Создаём попарные группы
+        groups = []
+        for pair in pairs:
+            i, j = pair
+            hand1, idx1, _ = all_points[i]
+            hand2, idx2, _ = all_points[j]
+            point1_label = get_point_label(hand1, idx1)
+            point2_label = get_point_label(hand2, idx2)
+            groups.append([point1_label, point2_label])
+
+        # Удаляем дубликаты (порядок точек не важен)
+        unique_groups = []
+        for group in groups:
+            # Сортируем для нормализации
+            sorted_group = sorted(group)
+            if sorted_group not in unique_groups:
+                unique_groups.append(sorted_group)
+
+        return unique_groups
 
 
 
@@ -89,8 +132,6 @@ class HandTrackingVisualizer:
         if not self.running:
             print("✗ Не удалось запустить визуализатор")
             return
-
-
 
         while self.running:
             # Захват кадра
@@ -109,6 +150,9 @@ class HandTrackingVisualizer:
             # Обнаружение рук
             detection_result = self.landmarker.detect(mp_image)
 
+            # Подготовка данных для анализа пересечений
+            landmarks_dict = {'right': None, 'left': None}
+
             # Отрисовка рук
             if detection_result.hand_landmarks and detection_result.handedness:
                 for landmarks, handedness_info in zip(detection_result.hand_landmarks,
@@ -116,25 +160,37 @@ class HandTrackingVisualizer:
                     hand_type = handedness_info[0].category_name.lower()
                     confidence = handedness_info[0].score
 
-                    # Выбираем цвет в зависимости от руки
-                    color = COLOR_LEFT if hand_type == 'left' else COLOR_RIGHT
-
-
-                    # Рисуем все точки
-                    self.draw_landmarks(frame, landmarks, color)
+                    # Сохраняем точки в словарь
+                    landmarks_dict[hand_type] = landmarks
 
 
 
-            cv2.putText(frame, f"Point radius: {self.RADIUS}px", (10, 60),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1)
+            # Находим группы пересекающихся точек
+            intersecting_groups = self.find_intersecting_point_groups(landmarks_dict)
+
 
             # Показ кадра
             cv2.imshow('Hand Tracking Visualizer', frame)
 
+            # Обработка клавиш
+            key = cv2.waitKey(1) & 0xFF
+
             # Выход по клавише 'q'
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            if key == ord('q'):
                 print("\nЗавершение работы...")
                 break
+
+            # Вывод групп точек по клавише 's'
+            if key == ord('s'):
+                if intersecting_groups:
+                    # Форматируем вывод
+                    output_str = str(intersecting_groups)
+                    # Заменяем 'right' на 'main', 'left' на 'second' для вывода
+                    output_str = output_str.replace("'right'", "'main'").replace("'left'", "'second'")
+                    output_str = output_str.replace("'", '"')
+                    print(f"Пересекающиеся группы точек: {output_str}")
+                else:
+                    print("Нет пересекающихся групп точек")
 
         self.stop()
 
