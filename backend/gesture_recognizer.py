@@ -23,6 +23,8 @@ SECOND_HAND = "left" if CONTROL_HAND == "right" else "right"
 class GestureRecognizer:
     def __init__(self, gestures_file='config/gestures.json'):
 
+        self.razengan = False
+
         self.gestures_file = gestures_file
         self.gestures = []
         self.active_gestures = {}  # {gesture_id: {'start_time': timestamp, 'hold_activated': False}}
@@ -376,8 +378,15 @@ class GestureRecognizer:
             else:
                 return
 
+        elif gesture_type == "naruto":
+            self.razengan=True
+
         else:
             print(f"Тип действия не обозначен")
+
+
+    def is_razengan(self):
+        return self.razengan
 
     def recognize_and_execute(self, landmarks_dict):
         # Проверяем, есть ли хоть какие-то точки

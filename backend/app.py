@@ -358,6 +358,26 @@ class AdvancedCursorController:
                     elif active_hand == 'right' and right_center:
                         cv2.circle(frame, right_center, 7, (0, 255, 0), cv2.FILLED)
 
+                        if self.gesture_recognizer.is_razengan():
+                            overlay = cv2.imread('Razengan.png')
+                            h_overlay, w_overlay = overlay.shape[:2]
+
+                            # Предполагаем, что right_center = (x, y), где x - ширина, y - высота
+                            x, y = right_center  # x - координата по горизонтали, y - по вертикали
+
+                            # Вычисляем левый верхний угол для вставки (правый нижний угол картинки совпадает с right_center)
+                            top_left_x = x - w_overlay
+                            top_left_y = y - h_overlay
+
+                            # Проверяем, чтобы картинка не выходила за границы кадра
+                            if (top_left_x >= 0 and top_left_y >= 0 and
+                                    top_left_x + w_overlay <= frame.shape[1] and
+                                    top_left_y + h_overlay <= frame.shape[0]):
+                                # Вставляем картинку: [y1:y2, x1:x2]
+                                frame[top_left_y:y, top_left_x:x] = overlay
+
+
+
                     self.frame_count += 1
                     if time.time() - self.last_fps_time >= 1.0:
                         self.fps = self.frame_count
