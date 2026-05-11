@@ -52,6 +52,7 @@ function App() {
 
   const handleOpenAddGesture = () => {
     setShowAddGestureForm(true)
+
     handlePythonToggle('scanner')
 
   }
@@ -491,66 +492,83 @@ function App() {
               )}
             </div>
 
-            <div class="absolute inset-0 rounded-xl mb-5 pointer-events-none">
-              <div
-                id="sensetivity_zone"
-                style={getZoneStyles()}
-              ></div>
-            </div>
+            {!showAddGestureForm ? (
+
+               <div class="absolute inset-0 rounded-xl mb-5 pointer-events-none">
+                  <div
+                    id="sensetivity_zone"
+                    style={getZoneStyles()}
+                  ></div>
+                </div>
+
+            ) : null}
 
             <div class="absolute inset-0 m-3 grid grid-rows-[32px_10fr] grid-cols-[32px_10fr] gap-1">
-              <div class="h-full bg-white/50 p-[3px] rounded-xl">
-                    <img src={moving_img} class="h-full" />
-              </div>
-              <div>
-                <div class="h-full bg-white/50 px-2 py-2 rounded-xl flex items-center">
-                  <input
-                    id="sensitivity_zone_x"
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={sensitivityZoneX}
-                    onChange={(e) => handleSensitivityZoneXChange(Number(e.target.value))}
-                    className="h-full w-full
-                        [&::-webkit-slider-runnable-track]:bg-white
-                        [&::-webkit-slider-runnable-track]:rounded-full
-                        [&::-webkit-slider-runnable-track]:h-full
-                        [&::-moz-range-track]:bg-white
-                        [&::-moz-range-track]:rounded-full
-                        [&::-moz-range-track]:h-[10px]
-                        [&::-moz-range-progress]:bg-white
-                        [&::-moz-range-progress]:rounded-full
-                        [&::-moz-range-progress]:h-[10px]"
-                  />
-                </div>
-              </div>
-              <div>
-                <div class="h-full bg-white/50 py-2 px-2 rounded-xl flex items-center justify-center">
-                    <input
-                        id="sensitivity_zone_y"
-                        type="range"
-                        min={0}
-                        max={100}
-                        value={sensitivityZoneY}
-                        onChange={(e) => handleSensitivityZoneYChange(Number(e.target.value))}
-                        className="h-full w-full
-                        [&::-webkit-slider-runnable-track]:bg-white
-                        [&::-webkit-slider-runnable-track]:rounded-full
-                        [&::-webkit-slider-runnable-track]:w-full
-                        [&::-moz-range-track]:bg-white
-                        [&::-moz-range-track]:rounded-full
-                        [&::-moz-range-track]:w-[10px]
-                        [&::-moz-range-progress]:bg-white
-                        [&::-moz-range-progress]:rounded-full
-                        [&::-moz-range-progress]:w-[10px]"
-                        style={{
-                          WebkitAppearance: 'slider-vertical',
-                          appearance: 'slider-vertical',
-                        }}
-                      />
-                </div>
 
-              </div>
+              {!showAddGestureForm ? (
+
+                <>
+                  <div class="h-full bg-white/50 p-[3px] rounded-xl">
+                    <img src={moving_img} class="h-full" />
+                  </div>
+                  <div>
+                    <div class="h-full bg-white/50 px-2 py-2 rounded-xl flex items-center">
+                      <input
+                        id="sensitivity_zone_x"
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={sensitivityZoneX}
+                        onChange={(e) => handleSensitivityZoneXChange(Number(e.target.value))}
+                        className="h-full w-full
+                            [&::-webkit-slider-runnable-track]:bg-white
+                            [&::-webkit-slider-runnable-track]:rounded-full
+                            [&::-webkit-slider-runnable-track]:h-full
+                            [&::-moz-range-track]:bg-white
+                            [&::-moz-range-track]:rounded-full
+                            [&::-moz-range-track]:h-[10px]
+                            [&::-moz-range-progress]:bg-white
+                            [&::-moz-range-progress]:rounded-full
+                            [&::-moz-range-progress]:h-[10px]"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <div class="h-full bg-white/50 py-2 px-2 rounded-xl flex items-center justify-center">
+                        <input
+                            id="sensitivity_zone_y"
+                            type="range"
+                            min={0}
+                            max={100}
+                            value={sensitivityZoneY}
+                            onChange={(e) => handleSensitivityZoneYChange(Number(e.target.value))}
+                            className="h-full w-full
+                            [&::-webkit-slider-runnable-track]:bg-white
+                            [&::-webkit-slider-runnable-track]:rounded-full
+                            [&::-webkit-slider-runnable-track]:w-full
+                            [&::-moz-range-track]:bg-white
+                            [&::-moz-range-track]:rounded-full
+                            [&::-moz-range-track]:w-[10px]
+                            [&::-moz-range-progress]:bg-white
+                            [&::-moz-range-progress]:rounded-full
+                            [&::-moz-range-progress]:w-[10px]"
+                            style={{
+                              WebkitAppearance: 'slider-vertical',
+                              appearance: 'slider-vertical',
+                            }}
+                          />
+                    </div>
+                  </div>
+                </>
+
+              ) : (
+                 <>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                 </>
+
+              )}
 
               <div className="h-full w-full flex justify-end items-end">
                   <div className="bg-white/70 h-1/10 rounded-xl px-3 py-1 flex items-center gap-3">
@@ -564,12 +582,18 @@ function App() {
                       </p>
                     </div>
 
-                    <div className="flex items-center">
-                      <p className="text-[1.5vmax] font-bold text-black">FPS:</p>
-                      <p className="text-[1.5vmax] font-bold text-black ml-2">
-                        {fps}
-                      </p>
-                    </div>
+                    {!showAddGestureForm ? (
+
+                        <div className="flex items-center">
+                          <p className="text-[1.5vmax] font-bold text-black">FPS:</p>
+                          <p className="text-[1.5vmax] font-bold text-black ml-2">
+                            {fps}
+                          </p>
+                        </div>
+
+                    ) : null}
+
+
                   </div>
               </div>
 
@@ -761,9 +785,11 @@ function App() {
                       <p class="text-[1.5vmax] ml-2">Библиотека жестов</p>
                     </div>
                     <button
-
+                        disabled={pythonRunning}
                         onClick={handleOpenAddGesture}
-                        className="px-[3vmax] text-[1.2vmax] text-[rgb(6,207,249)] border-2 border-[rgb(6,207,249)] rounded-xl"
+                        className={ !pythonRunning ? 'px-[3vmax] text-[1.2vmax] text-[rgb(6,207,249)] border-2 border-[rgb(6,207,249)] rounded-xl'
+                            : 'px-[3vmax] text-[1.2vmax] text-gray-300 border-2 border-gray-300 rounded-xl'
+                        }
                     >
                         + ДОБАВИТЬ ЖЕСТ
                     </button>
