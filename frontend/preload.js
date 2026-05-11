@@ -3,9 +3,9 @@ const { contextBridge, ipcRenderer } = require('electron')
 console.log('Preload script started')
 
 const electronAPI = {
-  startPython: () => {
+  startPython: (scriptFile) => {
     console.log('startPython called')
-    return ipcRenderer.invoke('start-python')
+    return ipcRenderer.invoke('start-python', scriptFile)
   },
   stopPython: () => {
     console.log('stopPython called')

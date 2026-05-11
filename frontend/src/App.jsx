@@ -11,6 +11,8 @@ import moving_img from './assets/moving.png'
 
 function App() {
   const [pythonRunning, setPythonRunning] = useState(false)
+  const [gestureScannerRunning, setGestureScannerRunning] = useState(false)
+
   const [apiReady, setApiReady] = useState(false)
 
   const [cursorMenuOpen, setCursorMenuOpen] = useState(false)
@@ -40,7 +42,7 @@ function App() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [gestureToDelete, setGestureToDelete] = useState(null)
 
-  const [pythonStatus, setPythonStatus] = useState('ОСТАНОВЛЕНО') // 'ОСТАНОВЛЕНО', 'ЗАПУСКАЕТСЯ...', 'ЗАПУЩЕНО'
+  const [pythonStatus, setPythonStatus] = useState('ОСТАНОВЛЕНО')
   const [fps, setFps] = useState(0)
 
    /* Установка действия для нового жеста */
@@ -50,12 +52,16 @@ function App() {
 
   const handleOpenAddGesture = () => {
     setShowAddGestureForm(true)
+    handlePythonToggle('scanner')
+
   }
 
   const handleCloseAddGesture = () => {
     setShowAddGestureForm(false)
     setSelectedGestureAction(null)
     setNewGestureName('')
+    handlePythonToggle('scanner')
+
   }
 
   const handleSaveNewGesture = () => {
@@ -114,6 +120,8 @@ function App() {
       setNewGestureName('')
       setSelectedGestureAction(null)
       setShowAddGestureForm(false)
+      handlePythonToggle('scanner')
+
   }
 
 
@@ -299,11 +307,12 @@ function App() {
       window.electronAPI.onFrame((frameData) => {
         setCurrentFrame(`data:image/jpeg;base64,${frameData}`)
 
-        setPythonStatus('ЗАПУЩЕНО')
+        if (showAddGestureForm) { setPythonStatus('ГОТОВ К СКАНИРОВАНИЮ') }
+        else { setPythonStatus('ЗАПУЩЕНО') }
         setPythonRunning(true)
       })
     }
-  }, [])
+  }, [showAddGestureForm])
 
 
   // Загрузка жестов при запуске
@@ -405,10 +414,7 @@ function App() {
   useEffect(() => {
     if (window.electronAPI?.onPythonStatus) {
       window.electronAPI.onPythonStatus((status) => {
-        if (status === 'starting') {
-          setPythonStatus('ЗАПУСКАЕТСЯ...')
-          setPythonRunning(false)
-        } else if (status === 'running') {
+        if (status === 'running') {
           setPythonRunning(true)
           // Статус "ЗАПУЩЕНО" установится при получении первого кадра
         } else if (status === 'stopped') {
@@ -429,11 +435,11 @@ function App() {
     }
   }, [])
 
-  const startPython = async () => {
+  const startPython = async (scriptFile) => {
     if (!apiReady) return
     try {
       setPythonStatus('ЗАПУСКАЕТСЯ...')
-      await window.electronAPI.startPython()
+      await window.electronAPI.startPython(scriptFile)
       // Статус "ЗАПУЩЕНО" установится при получении первого кадра
     } catch (error) {
       console.error('Error starting Python:', error)
@@ -445,8 +451,6 @@ function App() {
     if (!apiReady) return
     try {
       await window.electronAPI.stopPython()
-      setPythonStatus('ОСТАНОВЛЕНО')
-      setPythonRunning(false)
       setCurrentFrame(null)
       setFps(0)
     } catch (error) {
@@ -454,13 +458,15 @@ function App() {
     }
   }
 
-  const handlePythonToggle = () => {
+  const handlePythonToggle = (scriptFile) => {
     if (pythonRunning) {
       stopPython()
     } else {
-      startPython()
+      startPython(scriptFile)
     }
   }
+
+
 
   return (
     <div className="w-full min-h-screen bg-white flex flex-col">
@@ -551,7 +557,7 @@ function App() {
                     <div className="flex items-center">
                       <p className="text-[1.5vmax] font-bold text-black">СТАТУС:</p>
                       <p className={`text-[1.5vmax] font-bold ml-2 ${
-                        pythonStatus === 'ЗАПУЩЕНО' ? 'text-green-600' :
+                        pythonStatus === 'ЗАПУЩЕНО' || pythonStatus === 'ГОТОВ К СКАНИРОВАНИЮ' ? 'text-green-600' :
                         pythonStatus === 'ЗАПУСКАЕТСЯ...' ? 'text-yellow-600' : 'text-red-600'
                       }`}>
                         {pythonStatus}
@@ -571,7 +577,7 @@ function App() {
           </div>
           <div class="w-full h-[5vmax] pt-[2vmax] flex">
             <button
-              onClick={handlePythonToggle}
+              onClick={() => handlePythonToggle('main')}
               class={`w-2/3 text-white text-[1.5vmax] rounded-xl transition-colors ${
                 pythonRunning
                   ? 'bg-red-500 hover:bg-red-700'
@@ -756,7 +762,7 @@ function App() {
                     </div>
                     <button
 
-                        onClick={() => setShowAddGestureForm(true)}
+                        onClick={handleOpenAddGesture}
                         className="px-[3vmax] text-[1.2vmax] text-[rgb(6,207,249)] border-2 border-[rgb(6,207,249)] rounded-xl"
                     >
                         + ДОБАВИТЬ ЖЕСТ

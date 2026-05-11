@@ -4,6 +4,8 @@ import time
 import numpy as np
 import os
 import itertools
+import base64
+
 
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
@@ -18,7 +20,7 @@ MODEL_PATH = config.get('model.path')
 CLICK_DISTANCE_THRESHOLD = 0.05
 
 
-class HandTrackingVisualizer:
+class GestureRecorder:
 
 
     def __init__(self):
@@ -168,29 +170,27 @@ class HandTrackingVisualizer:
             # Находим группы пересекающихся точек
             intersecting_groups = self.find_intersecting_point_groups(landmarks_dict)
 
+            # Кодируем кадр в JPEG, затем в base64
+            _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+            frame_base64 = base64.b64encode(buffer).decode('utf-8')
 
-            # Показ кадра
-            cv2.imshow('Hand Tracking Visualizer', frame)
+            # Отправляем в Electron через stdout (с префиксом FRAME:)
+            print(f"FRAME:{frame_base64}")
 
-            # Обработка клавиш
-            key = cv2.waitKey(1) & 0xFF
 
-            # Выход по клавише 'q'
-            if key == ord('q'):
-                print("\nЗавершение работы...")
-                break
+
 
             # Вывод групп точек по клавише 's'
-            if key == ord('s'):
-                if intersecting_groups:
-                    # Форматируем вывод
-                    output_str = str(intersecting_groups)
-                    # Заменяем 'right' на 'main', 'left' на 'second' для вывода
-                    output_str = output_str.replace("'right'", "'main'").replace("'left'", "'second'")
-                    output_str = output_str.replace("'", '"')
-                    print(f"Пересекающиеся группы точек: {output_str}")
-                else:
-                    print("Нет пересекающихся групп точек")
+            # if key == ord('s'):
+            #     if intersecting_groups:
+            #         # Форматируем вывод
+            #         output_str = str(intersecting_groups)
+            #         # Заменяем 'right' на 'main', 'left' на 'second' для вывода
+            #         output_str = output_str.replace("'right'", "'main'").replace("'left'", "'second'")
+            #         output_str = output_str.replace("'", '"')
+            #         print(f"Пересекающиеся группы точек: {output_str}")
+            #     else:
+            #         print("Нет пересекающихся групп точек")
 
         self.stop()
 
@@ -201,14 +201,14 @@ class HandTrackingVisualizer:
             self.landmarker.close()
         if hasattr(self, 'cap') and self.cap:
             self.cap.release()
-        cv2.destroyAllWindows()
+
         print("Программа завершена")
 
 
 if __name__ == "__main__":
     try:
-        visualizer = HandTrackingVisualizer()
-        visualizer.run()
+        gesture_recorder = GestureRecorder()
+        gesture_recorder.run()
     except KeyboardInterrupt:
         print("\nПрерывание пользователем")
     except Exception as e:

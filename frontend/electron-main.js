@@ -73,14 +73,21 @@ ipcMain.handle('save-settings', async (event, newSettings) => {
   }
 })
 
-ipcMain.handle('start-python', async () => {
+ipcMain.handle('start-python', async (event, scriptFile) => {
   if (pythonProcess) {
     return { success: false, message: 'Python already running' }
   }
 
-  const scriptPath = path.join(__dirname, '..', 'backend', 'app.py')
-  const backendDir = path.join(__dirname, '..', 'backend')
+  let scriptPath = path.join(__dirname, '..', 'backend')
 
+  if (scriptFile === "main") {
+    scriptPath = path.join(scriptPath, 'app.py')
+  }
+  else {
+     scriptPath = path.join(scriptPath, 'gesture_recorder.py')
+  }
+
+  const backendDir = path.join(__dirname, '..', 'backend')
   console.log('Script path:', scriptPath)
   console.log('Working directory:', backendDir)
 
@@ -156,6 +163,8 @@ ipcMain.handle('stop-python', async () => {
 ipcMain.handle('get-python-status', async () => {
   return pythonProcess !== null
 })
+
+
 
 
 ipcMain.handle('read-gestures', async () => {
