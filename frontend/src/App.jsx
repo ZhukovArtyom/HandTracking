@@ -120,8 +120,8 @@ function App() {
         // Очищаем форму и закрываем
       setNewGestureName('')
       setSelectedGestureAction(null)
-      setShowAddGestureForm(false)
-      handlePythonToggle('scanner')
+//       setShowAddGestureForm(false)
+//       handlePythonToggle('scanner')
 
   }
 
@@ -624,6 +624,7 @@ function App() {
               selectedAction={selectedGestureAction}
               gestureName={newGestureName}
               onGestureNameChange={setNewGestureName}
+              pythonStatus={pythonStatus}
 
             />
           ) : (

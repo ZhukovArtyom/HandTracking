@@ -1,13 +1,21 @@
 {
   "gestures": [
-
     {
       "id": "1778258324468",
       "name": "Расенган",
       "action_name": "Razengan",
       "image": "",
       "enabled": true,
-      "points_groups": [ ["second_17", "main_20"], ["second_12", "main_11"] ],
+      "points_groups": [
+        [
+          "second_17",
+          "main_20"
+        ],
+        [
+          "second_12",
+          "main_11"
+        ]
+      ],
       "type": "naruto",
       "on_press": "",
       "on_release": ""
