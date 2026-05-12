@@ -24,6 +24,7 @@ function NewGestureMenu({onCancel, onSave, onRecordGesture, selectedAction, gest
                       <div class="h-3/10 flex items-center pb-[1.5vmax]">
                             <img id="gesture_icon" class="h-full aspect-[1/1] bg-white border-1 border-[rgb(6,207,249)] rounded-full"/>
                             <button
+                                disabled={pythonStatus !== 'ГОТОВ К СКАНИРОВАНИЮ'}
                                 onClick = {onRecordGesture}
                                 class= {pythonStatus === 'ГОТОВ К СКАНИРОВАНИЮ' ? 'h-1/2 px-[3vmax] ml-[2vmax] text-[1.7vmax] bg-[rgb(6,207,249)] rounded-xl text-white'
                                     : 'h-1/2 px-[3vmax] ml-[2vmax] text-[1.7vmax] bg-gray-300 rounded-xl text-white'

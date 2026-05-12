@@ -1,18 +1,17 @@
 @import 'tailwindcss';
 
-/*
-input[id="sensitivity_zone_y"]::-webkit-slider-runnable-track {
-  background: white !important;
-  border-radius: 9999px !important;
+@keyframes pulseScale {
+  0% {
+    transform: scale(1);
 
+  }
+  20% {
+    transform: scale(2);
+
+  }
+
+  60% {
+    transform: scale(1);
+
+  }
 }
-
-input[id="sensitivity_zone_y"]::-moz-range-track {
-      background: white !important;
-      border-radius: 9999px !important;
-    }
-
-input[id="sensitivity_zone_y"]::-moz-range-progress {
-  background: white !important;
-  border-radius: 9999px !important;
-}*/

@@ -46,16 +46,39 @@ function App() {
   const [pythonStatus, setPythonStatus] = useState('ОСТАНОВЛЕНО')
   const [fps, setFps] = useState(0)
 
+  const [timerCount, setTimerCount] = useState(0)
+  const [timerActive, setTimerActive] = useState(false)
+
+
+  // Таймер перед командой записать жест
+  useEffect(() => {
+    let interval = null
+    if (timerActive && timerCount > 0) {
+      interval = setInterval(() => {
+        setTimerCount(prev => prev - 1)
+      }, 1000)
+    } else if (timerCount === 0 && timerActive) {
+      // Таймер закончился, отправляем команду на запись
+      setTimerActive(false)
+
+      // Отправляем команду записать жест
+      window.electronAPI.recordGesture()
+
+    }
+    return () => clearInterval(interval)
+  }, [timerActive, timerCount])
+
+
 
   const RecordGesture = async () => {
 
       setPointGroups([])
+
       if (!apiReady) return
-      try {
-        await window.electronAPI.recordGesture()
-      } catch (error) {
-        console.error('Error recording gesture:', error)
-      }
+
+      // запускаем таймер, по истечении которого отправится команда на запись жеста
+      setTimerCount(5)
+      setTimerActive(true)
   }
 
 
@@ -505,6 +528,9 @@ function App() {
 
 
 
+
+
+
   return (
     <div className="w-full min-h-screen bg-white flex flex-col">
       <div class="w-full h-[5vmax] bg-white border-b-2 border-gray-300 flex items-center">
@@ -537,7 +563,29 @@ function App() {
                   ></div>
                 </div>
 
-            ) : null}
+            ) : (timerActive ? (
+
+                  <div className="absolute inset-0 flex items-center justify-center">
+                      {timerCount > 0 && (
+                          <div
+
+                              className="h-1/4 aspect-[1/1] rounded-full  flex
+                              items-center justify-center text-[10vmax] font-bold text-[rgb(6,207,249)] opacity-50"
+
+                              style={{
+                                  animation: 'pulseScale 1s ease-out infinite'
+                              }}
+                          >
+                            {timerCount}
+                          </div>
+                      )}
+
+                  </div>
+
+
+            ) : null )}
+
+
 
             <div class="absolute inset-0 m-3 grid grid-rows-[32px_10fr] grid-cols-[32px_10fr] gap-1">
 

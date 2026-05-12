@@ -88,7 +88,7 @@ class GestureRecorder:
                 command = sys.stdin.readline().strip()
                 if command == 'RECORD_GESTURE':
 
-                    time.sleep(3)
+
                     frame_to_process = None
                     with self.frame_lock:
                         if self.current_frame is not None:
