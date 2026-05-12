@@ -29,6 +29,9 @@ const electronAPI = {
   onFrame: (callback) => {
     ipcRenderer.on('frame', (event, frameData) => callback(frameData))
   },
+  onPointGroups: (callback) => {
+    ipcRenderer.on('point-groups', (event, pointsData) => callback(pointsData))
+  },
   readGestures: () => {
     console.log('readGestures called')
     return ipcRenderer.invoke('read-gestures')
@@ -42,6 +45,9 @@ const electronAPI = {
   },
   onFps: (callback) => {
     ipcRenderer.on('python-fps', (event, fps) => callback(fps))
+  },
+  recordGesture: () => {
+    ipcRenderer.invoke('record-gesture')
   }
 }
 

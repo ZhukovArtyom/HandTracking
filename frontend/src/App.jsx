@@ -20,8 +20,9 @@ function App() {
 
   const [showAddGestureForm, setShowAddGestureForm] = useState(false)
 
-  /*  Имя и действие нового жеста */
+  /*  Имя, группы точек и действие нового жеста */
   const [newGestureName, setNewGestureName] = useState('')
+  const [pointGroups, setPointGroups] = useState([])
   const [selectedGestureAction, setSelectedGestureAction] = useState(null)
 
   const cursorMenuRef = useRef(null)
@@ -45,6 +46,19 @@ function App() {
   const [pythonStatus, setPythonStatus] = useState('ОСТАНОВЛЕНО')
   const [fps, setFps] = useState(0)
 
+
+  const RecordGesture = async () => {
+
+      setPointGroups([])
+      if (!apiReady) return
+      try {
+        await window.electronAPI.recordGesture()
+      } catch (error) {
+        console.error('Error recording gesture:', error)
+      }
+  }
+
+
    /* Установка действия для нового жеста */
   const handleSelectAction = (action) => {
       setSelectedGestureAction(action)
@@ -61,12 +75,25 @@ function App() {
     setShowAddGestureForm(false)
     setSelectedGestureAction(null)
     setNewGestureName('')
+    setPointGroups([])
     handlePythonToggle('scanner')
 
   }
 
   const handleSaveNewGesture = () => {
 
+
+      if (pointGroups.length === 0) {
+        // Вместо alert используем более мягкое уведомление
+        const inputElement = document.getElementById('gesture_icon')
+        if (inputElement) {
+          inputElement.style.borderColor = 'red'
+          setTimeout(() => {
+            inputElement.style.borderColor = ''
+          }, 1000)
+        }
+
+      }
 
       if (!newGestureName.trim()) {
         // Вместо alert используем более мягкое уведомление
@@ -91,7 +118,7 @@ function App() {
 
       }
 
-      if (!selectedGestureAction || !newGestureName.trim()) {
+      if (!selectedGestureAction || !pointGroups || !newGestureName.trim()) {
           return
       }
 
@@ -102,7 +129,7 @@ function App() {
           action_name: selectedGestureAction.displayName,
           image: "",
           enabled: true,
-          points_groups: [],
+          points_groups: pointGroups,
           type: selectedGestureAction.type,
           on_press: selectedGestureAction.on_press,
           on_release: selectedGestureAction.on_release || ""
@@ -120,8 +147,8 @@ function App() {
         // Очищаем форму и закрываем
       setNewGestureName('')
       setSelectedGestureAction(null)
-//       setShowAddGestureForm(false)
-//       handlePythonToggle('scanner')
+      setPointGroups([])
+
 
   }
 
@@ -314,6 +341,15 @@ function App() {
       })
     }
   }, [showAddGestureForm])
+
+  // Получение групп пересекающихся точек
+  useEffect(() => {
+    if (window.electronAPI?.onPointGroups) {
+      window.electronAPI.onPointGroups((pointsData) => {
+        setPointGroups(pointsData)
+      })
+    }
+  }, [])
 
 
   // Загрузка жестов при запуске
@@ -564,7 +600,21 @@ function App() {
               ) : (
                  <>
                     <div></div>
-                    <div></div>
+
+                    {pointGroups.length !== 0 ? (
+
+                         <div className="flex justify-end">
+                            <p className="bg-white/70 h-full rounded-xl px-3 py-1 flex items-center text-[1.5vmax] font-bold text-green-500">
+                                ЖЕСТ ЗАПИСАН
+                            </p>
+                        </div>
+
+                    ) : (
+
+                       <div></div>
+
+                    )}
+
                     <div></div>
                  </>
 
@@ -621,6 +671,7 @@ function App() {
 
               onCancel={handleCloseAddGesture}
               onSave={handleSaveNewGesture}
+              onRecordGesture={RecordGesture}
               selectedAction={selectedGestureAction}
               gestureName={newGestureName}
               onGestureNameChange={setNewGestureName}

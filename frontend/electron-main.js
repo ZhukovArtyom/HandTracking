@@ -118,6 +118,15 @@ ipcMain.handle('start-python', async (event, scriptFile) => {
         const fpsValue = parseInt(output.substring(4))
         mainWindow?.webContents.send('python-fps', fpsValue)
     }
+    else if (output.startsWith('POINT_GROUPS:')) {
+        const str_data = output.substring(13)
+        try {
+            const pointsData = JSON.parse(str_data)
+            mainWindow?.webContents.send('point-groups', pointsData)
+        } catch (e) {
+            console.error('Failed to parse point groups:', e, 'Data:', str_data)
+        }
+    }
     else {
       console.log(`Python: ${output}`)
       mainWindow?.webContents.send('python-log', output)
@@ -195,6 +204,14 @@ ipcMain.handle('save-gestures', async (event, gesturesData) => {
     console.error('Error saving gestures:', error)
     return { success: false }
   }
+})
+
+ipcMain.handle('record-gesture', async () => {
+  if (pythonProcess) {
+    pythonProcess.stdin.write('RECORD_GESTURE\n')
+    return { success: true }
+  }
+  return { success: false, message: 'Python not running' }
 })
 
 

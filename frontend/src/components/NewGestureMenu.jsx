@@ -4,7 +4,7 @@ import action_img from '../assets/action_icon.png'
 import plus_img from '../assets/plus_icon.png'
 import hand_blue_bg_img from '../assets/hand_blue_bg.png'
 
-function NewGestureMenu({onCancel, onSave, selectedAction, gestureName, onGestureNameChange, pythonStatus}) {
+function NewGestureMenu({onCancel, onSave, onRecordGesture, selectedAction, gestureName, onGestureNameChange, pythonStatus}) {
 
 
   return (
@@ -22,8 +22,9 @@ function NewGestureMenu({onCancel, onSave, selectedAction, gestureName, onGestur
                   <div class="h-[33.5vmax] m-[1vmax]">
 
                       <div class="h-3/10 flex items-center pb-[1.5vmax]">
-                            <img class="h-full aspect-[1/1] bg-gray-500 rounded-full"/>
+                            <img id="gesture_icon" class="h-full aspect-[1/1] bg-white border-1 border-[rgb(6,207,249)] rounded-full"/>
                             <button
+                                onClick = {onRecordGesture}
                                 class= {pythonStatus === 'ГОТОВ К СКАНИРОВАНИЮ' ? 'h-1/2 px-[3vmax] ml-[2vmax] text-[1.7vmax] bg-[rgb(6,207,249)] rounded-xl text-white'
                                     : 'h-1/2 px-[3vmax] ml-[2vmax] text-[1.7vmax] bg-gray-300 rounded-xl text-white'
                                     }

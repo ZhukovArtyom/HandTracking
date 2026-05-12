@@ -5,7 +5,8 @@ import numpy as np
 import os
 import itertools
 import base64
-
+import threading
+import sys
 
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
@@ -22,9 +23,7 @@ CLICK_DISTANCE_THRESHOLD = 0.05
 
 class GestureRecorder:
 
-
     def __init__(self):
-
         print("\nИнициализация модели MediaPipe...")
 
         try:
@@ -58,9 +57,77 @@ class GestureRecorder:
 
         self.running = True
 
-        # Статистика FPS
-        self.frame_count = 0
-        self.last_print_time = time.time()
+        self.frame_lock = threading.Lock()
+        self.current_frame = None
+
+    def capture_thread(self):
+        """Поток захвата видео"""
+        print("Запуск потока захвата...")
+        while self.running:
+            success, frame = self.cap.read()
+            if success:
+                frame = cv2.flip(frame, 1)
+                with self.frame_lock:
+                    self.current_frame = frame
+
+                # Кодируем кадр в JPEG, затем в base64
+                _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+                frame_base64 = base64.b64encode(buffer).decode('utf-8')
+
+                # Отправляем в Electron через stdout (с префиксом FRAME:)
+                print(f"FRAME:{frame_base64}")
+            time.sleep(0.001)
+
+
+
+    def gesture_recording_thread(self):
+        """Поток для прослушивания команд из stdin"""
+        print("Запуск потока прослушивания команд...")
+        while self.running:
+            try:
+                command = sys.stdin.readline().strip()
+                if command == 'RECORD_GESTURE':
+
+                    time.sleep(3)
+                    frame_to_process = None
+                    with self.frame_lock:
+                        if self.current_frame is not None:
+                            frame_to_process = self.current_frame.copy()
+
+                    if frame_to_process is not None:
+                        # Конвертация в RGB для MediaPipe
+                        frame_rgb = cv2.cvtColor(frame_to_process, cv2.COLOR_BGR2RGB)
+                        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame_rgb)
+
+                        # Обнаружение рук
+                        detection_result = self.landmarker.detect(mp_image)
+
+                        # Подготовка данных для анализа пересечений
+                        landmarks_dict = {'right': None, 'left': None}
+
+                        # Отрисовка рук
+                        if detection_result.hand_landmarks and detection_result.handedness:
+                            for landmarks, handedness_info in zip(detection_result.hand_landmarks,
+                                                                  detection_result.handedness):
+                                hand_type = handedness_info[0].category_name.lower()
+                                landmarks_dict[hand_type] = landmarks
+
+                        # Находим группы пересекающихся точек
+                        intersecting_groups = self.find_intersecting_point_groups(landmarks_dict)
+
+                        if intersecting_groups:
+                            # Форматируем вывод
+                            output_str = str(intersecting_groups)
+                            # Заменяем 'right' на 'main', 'left' на 'second' для вывода
+                            output_str = output_str.replace("'right'", "'main'").replace("'left'", "'second'")
+                            output_str = output_str.replace("'", '"')
+
+                            print(f"POINT_GROUPS:{output_str}")
+                        else:
+                            print("Нет пересекающихся групп точек")
+            except:
+                pass
+            time.sleep(0.01)
 
     def calculate_distance(self, point1, point2):
         """Вычисляет расстояние между двумя точками в нормализованных координатах"""
@@ -127,70 +194,22 @@ class GestureRecorder:
 
         return unique_groups
 
-
-
     def run(self):
         """Главный цикл программы"""
         if not self.running:
             print("✗ Не удалось запустить визуализатор")
             return
 
+        # Запускаем потоки
+        capture_t = threading.Thread(target=self.capture_thread, daemon=True)
+        recording_t = threading.Thread(target=self.gesture_recording_thread, daemon=True)
+
+        capture_t.start()
+        recording_t.start()
+
+        # Ждём завершения (бесконечно, пока running=True)
         while self.running:
-            # Захват кадра
-            success, frame = self.cap.read()
-            if not success:
-                print("Ошибка захвата кадра")
-                break
-
-            # Зеркальное отображение
-            frame = cv2.flip(frame, 1)
-
-            # Конвертация в RGB для MediaPipe
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame_rgb)
-
-            # Обнаружение рук
-            detection_result = self.landmarker.detect(mp_image)
-
-            # Подготовка данных для анализа пересечений
-            landmarks_dict = {'right': None, 'left': None}
-
-            # Отрисовка рук
-            if detection_result.hand_landmarks and detection_result.handedness:
-                for landmarks, handedness_info in zip(detection_result.hand_landmarks,
-                                                      detection_result.handedness):
-                    hand_type = handedness_info[0].category_name.lower()
-                    confidence = handedness_info[0].score
-
-                    # Сохраняем точки в словарь
-                    landmarks_dict[hand_type] = landmarks
-
-
-
-            # Находим группы пересекающихся точек
-            intersecting_groups = self.find_intersecting_point_groups(landmarks_dict)
-
-            # Кодируем кадр в JPEG, затем в base64
-            _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
-            frame_base64 = base64.b64encode(buffer).decode('utf-8')
-
-            # Отправляем в Electron через stdout (с префиксом FRAME:)
-            print(f"FRAME:{frame_base64}")
-
-
-
-
-            # Вывод групп точек по клавише 's'
-            # if key == ord('s'):
-            #     if intersecting_groups:
-            #         # Форматируем вывод
-            #         output_str = str(intersecting_groups)
-            #         # Заменяем 'right' на 'main', 'left' на 'second' для вывода
-            #         output_str = output_str.replace("'right'", "'main'").replace("'left'", "'second'")
-            #         output_str = output_str.replace("'", '"')
-            #         print(f"Пересекающиеся группы точек: {output_str}")
-            #     else:
-            #         print("Нет пересекающихся групп точек")
+            time.sleep(0.1)
 
         self.stop()
 
