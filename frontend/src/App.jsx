@@ -8,6 +8,9 @@ import cursor_img from './assets/cursor.png'
 import hand_blue_bg_img from './assets/hand_blue_bg.png'
 import hand_white_bg_img from './assets/hand_white_bg.png'
 import moving_img from './assets/moving.png'
+import warning_img from './assets/warning_icon.png'
+import success_img from './assets/success_icon.png'
+
 
 function App() {
   const [pythonRunning, setPythonRunning] = useState(false)
@@ -655,13 +658,15 @@ function App() {
                     {pointGroups.length !== 0 ? (
 
                         <div className="flex justify-end">
-                            <p className={`bg-white/70 h-full rounded-xl px-3 py-1 flex items-center text-[1.5vmax] font-bold ${
+
+                            <div className={`bg-white/70 h-full rounded-xl px-3 py-1 flex items-center text-[1.5vmax] font-bold ${
                                 typeof pointGroups[0] === 'string' ? 'text-red-500' : 'text-green-600'
                             }`}>
 
+                                <img src={ typeof pointGroups[0] === 'string' ? warning_img : success_img} className="h-full mr-[0.5vmax]"/>
                                 { typeof pointGroups[0] === 'string' ? pointGroups[0] : 'ЖЕСТ ЗАПИСАН'}
 
-                            </p>
+                            </div>
                         </div>
 
                     ) : (

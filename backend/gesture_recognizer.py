@@ -108,54 +108,45 @@ class GestureRecognizer:
         return np.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2)
 
     def check_point_group(self, landmarks_dict, point_group):
-        """
-        Проверяет, что все точки в группе находятся близко друг к другу
-        Поддерживает межручные группы (например: left_8, right_8)
+        # проверяем пересечения точек
 
-        Args:
-            landmarks_dict: словарь с точками {'left': [...], 'right': [...]}
-            point_group: список индексов точек, может содержать префиксы 'left_' или 'right_'
 
-        Returns:
-            bool: True если все точки близко друг к другу
-        """
-        if not landmarks_dict or len(point_group) < 2:
+        # Получаем координаты первой точки
+        hand_type1, idx1 = point_group[0].split('_')
+        hand_type1 = CONTROL_HAND if hand_type1 == "main" else SECOND_HAND
+        idx1 = int(idx1)
+
+        # Получаем координаты второй точки
+        hand_type2, idx2 = point_group[1].split('_')
+        hand_type2 = CONTROL_HAND if hand_type2 == "main" else SECOND_HAND
+        idx2 = int(idx2)
+
+        # Проверяем наличие рук и индексов
+        if hand_type1 not in landmarks_dict or landmarks_dict[hand_type1] is None:
+            return False
+        if hand_type2 not in landmarks_dict or landmarks_dict[hand_type2] is None:
             return False
 
-        # Получаем координаты всех точек в группе
-        points = []
-        for point_spec in point_group:
-            # Разбираем спецификацию точки
-            # Межручная точка: например 'left_8' или 'right_8'
-            hand_type, idx = point_spec.split('_')
-            hand_type = CONTROL_HAND if hand_type == "main" else SECOND_HAND
+        if idx1 >= len(landmarks_dict[hand_type1]) or idx2 >= len(landmarks_dict[hand_type2]):
+            return False
 
-            idx = int(idx)
-            if hand_type in landmarks_dict and landmarks_dict[hand_type] is not None:
-                if idx < len(landmarks_dict[hand_type]):
-                    points.append(landmarks_dict[hand_type][idx])
-                else:
-                    return False
-            else:
-                return False
+        # Получаем точки
+        point1 = landmarks_dict[hand_type1][idx1]
+        point2 = landmarks_dict[hand_type2][idx2]
 
-        # Проверяем, что максимальное расстояние между любой парой точек меньше порога
-        for i in range(len(points)):
-            for j in range(i + 1, len(points)):
-                distance = self.calculate_distance(points[i], points[j])
-                if distance > CLICK_DISTANCE_THRESHOLD:
-                    return False
+        # Вычисляем расстояние между точками
+        distance = self.calculate_distance(point1, point2)
 
-        return True
+        return distance <= CLICK_DISTANCE_THRESHOLD
 
     def check_gesture(self, landmarks_dict, gesture):
-
+        points_groups = gesture.get('points_groups')
         # Если нет групп точек, жест не выполнен
-        if not gesture.get('points_groups'):
+        if not points_groups:
             return False
 
         # Проверяем, что все группы точек пересекаются
-        for point_group in gesture['points_groups']:
+        for point_group in points_groups:
             if not self.check_point_group(landmarks_dict, point_group):
                 return False
 
@@ -237,6 +228,7 @@ class GestureRecognizer:
         """Запускает таймер для отложенной активации жеста"""
         gesture_id = gesture['id']
 
+
         # Если жест уже активен - игнорируем
         if gesture_id in self.active_gestures:
             return False
@@ -251,6 +243,19 @@ class GestureRecognizer:
 
         # Если есть другой отложенный жест - отменяем его и запускаем новый
         if self.pending_gestures:
+            current_points = len(gesture.get('points_groups', []))
+
+            # Получаем максимальное количество точек среди pending жестов
+            max_pending_points = max(
+                len(pending_data['gesture'].get('points_groups', []))
+                for pending_data in self.pending_gestures.values()
+            )
+
+            # Если текущий жест не сложнее существующего - не отменяем
+            if current_points <= max_pending_points:
+                return False
+
+            # Если текущий жест сложнее - отменяем все существующие
             for pending_id in list(self.pending_gestures.keys()):
                 self.cancel_pending_gesture(pending_id)
 
@@ -334,27 +339,16 @@ class GestureRecognizer:
                 win32api.mouse_event(win32con.MOUSEEVENTF_MIDDLEUP, 0, 0, 0, 0)
 
             elif action == 'wheel_up':
-
-                win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, 0, 0, 30, 0)
-                time.sleep(0.03)
-                self.on_gesture_release(gesture['id'])
+                self.hold_action(gesture['id'], action)
 
             elif action == 'wheel_down':
-
-                win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, 0, 0, -30, 0)
-                time.sleep(0.03)
-                self.on_gesture_release(gesture['id'])
+                self.hold_action(gesture['id'], action)
 
             elif action == 'volume_up':
-                keyboard.press('volume up')
-                time.sleep(0.03)
-                self.on_gesture_release(gesture['id'])
-
+                self.hold_action(gesture['id'], action)
 
             elif action == 'volume_down':
-                keyboard.press('volume down')
-                time.sleep(0.03)
-                self.on_gesture_release(gesture['id'])
+                self.hold_action(gesture['id'], action)
 
             else:
                 print(f"Неизвестное действие: {action}")
@@ -383,6 +377,28 @@ class GestureRecognizer:
 
         else:
             print(f"Тип действия не обозначен")
+
+
+    def hold_action(self, gesture_id, action):
+        def repeat():
+
+            while gesture_id in self.active_gestures:
+                # Выполняем действие
+                if action == 'volume_up':
+                    keyboard.press('volume up')
+                elif action == 'volume_down':
+                    keyboard.press('volume down')
+                elif action == 'wheel_up':
+                    win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, 0, 0, 30, 0)
+                elif action == 'wheel_down':
+                    win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, 0, 0, -30, 0)
+
+
+                time.sleep(0.03)
+
+        # Запускаем в отдельном потоке
+        thread = threading.Thread(target=repeat, daemon=True)
+        thread.start()
 
 
     def is_razengan(self):
@@ -423,6 +439,7 @@ class GestureRecognizer:
                 if self.check_gesture(landmarks_dict, gesture):
                     active_gesture_ids.add(gesture['id'])
                     self.execute_action(gesture, current_time)
+
 
             # Проверяем, какие жесты перестали быть активными
             for gesture_id in list(self.active_gestures.keys()):
