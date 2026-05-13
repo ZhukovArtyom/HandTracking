@@ -18,6 +18,9 @@ CAMERA_WIDTH = config.get('camera.width')
 CAMERA_HEIGHT = config.get('camera.height')
 MODEL_PATH = config.get('model.path')
 
+CONTROL_HAND = config.get('cursor.control_hand')
+
+
 CLICK_DISTANCE_THRESHOLD = 0.06
 
 
@@ -110,6 +113,12 @@ class GestureRecorder:
                             for landmarks, handedness_info in zip(detection_result.hand_landmarks,
                                                                   detection_result.handedness):
                                 hand_type = handedness_info[0].category_name.lower()
+
+                                if hand_type == 'left':
+                                    hand_type = 'right'
+                                else:
+                                    hand_type = 'left'
+
                                 landmarks_dict[hand_type] = landmarks
 
                         # Находим группы пересекающихся точек
@@ -184,7 +193,7 @@ class GestureRecorder:
 
         # Преобразуем hand_type в нужный формат (main - правая, second - левая)
         def get_point_label(hand_type, index):
-            if hand_type == 'left':
+            if hand_type == CONTROL_HAND:
                 return f"main_{index}"
             else:
                 return f"second_{index}"
