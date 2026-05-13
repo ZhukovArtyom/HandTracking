@@ -18,7 +18,7 @@ CAMERA_WIDTH = config.get('camera.width')
 CAMERA_HEIGHT = config.get('camera.height')
 MODEL_PATH = config.get('model.path')
 
-CLICK_DISTANCE_THRESHOLD = 0.05
+CLICK_DISTANCE_THRESHOLD = 0.06
 
 
 class GestureRecorder:
@@ -117,14 +117,29 @@ class GestureRecorder:
 
                         if intersecting_groups:
                             # Форматируем вывод
+                            can_send = True
                             output_str = str(intersecting_groups)
-                            # Заменяем 'right' на 'main', 'left' на 'second' для вывода
-                            output_str = output_str.replace("'right'", "'main'").replace("'left'", "'second'")
-                            output_str = output_str.replace("'", '"')
 
-                            print(f"POINT_GROUPS:{output_str}")
+                            if 'main' in output_str and 'second' in output_str:
+                                cross_hand = False
+                                for group in intersecting_groups:
+                                    # Проверяем, содержит ли группа точки с разными руками
+                                    has_main = any('main' in point for point in group)
+                                    has_second = any('second' in point for point in group)
+
+                                    if has_main and has_second:
+                                        cross_hand = True
+                                        break
+                                if not cross_hand:
+                                    print(f"POINT_GROUPS:[\"НЕКОРРЕКТНЫЙ ДВУРУЧНЫЙ ЖЕСТ\"]")
+                                    can_send = False
+
+                            if can_send:
+                                output_str = output_str.replace("'", '"')
+                                print(f"POINT_GROUPS:{output_str}")
+
                         else:
-                            print("Нет пересекающихся групп точек")
+                            print(f"POINT_GROUPS:[\"ЖЕСТ НЕ РАСПОЗНАН\"]")
             except:
                 pass
             time.sleep(0.01)

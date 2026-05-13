@@ -25,6 +25,7 @@ function App() {
   const [pointGroups, setPointGroups] = useState([])
   const [selectedGestureAction, setSelectedGestureAction] = useState(null)
 
+
   const cursorMenuRef = useRef(null)
   const gestureMenuRef = useRef(null)
 
@@ -74,10 +75,11 @@ function App() {
 
       setPointGroups([])
 
+
       if (!apiReady) return
 
       // запускаем таймер, по истечении которого отправится команда на запись жеста
-      setTimerCount(5)
+      setTimerCount(3)
       setTimerActive(true)
   }
 
@@ -99,6 +101,7 @@ function App() {
     setSelectedGestureAction(null)
     setNewGestureName('')
     setPointGroups([])
+
     handlePythonToggle('scanner')
 
   }
@@ -106,7 +109,7 @@ function App() {
   const handleSaveNewGesture = () => {
 
 
-      if (pointGroups.length === 0) {
+      if (pointGroups.length === 0 || typeof pointGroups[0] === 'string') {
         // Вместо alert используем более мягкое уведомление
         const inputElement = document.getElementById('gesture_icon')
         if (inputElement) {
@@ -141,7 +144,7 @@ function App() {
 
       }
 
-      if (!selectedGestureAction || !pointGroups || !newGestureName.trim()) {
+      if (!selectedGestureAction || !newGestureName.trim() || pointGroups.length === 0 || typeof pointGroups[0] === 'string') {
           return
       }
 
@@ -171,6 +174,7 @@ function App() {
       setNewGestureName('')
       setSelectedGestureAction(null)
       setPointGroups([])
+
 
 
   }
@@ -365,7 +369,7 @@ function App() {
     }
   }, [showAddGestureForm])
 
-  // Получение групп пересекающихся точек
+  // Получение групп пересекающихся точек или предупреждений
   useEffect(() => {
     if (window.electronAPI?.onPointGroups) {
       window.electronAPI.onPointGroups((pointsData) => {
@@ -648,18 +652,21 @@ function App() {
               ) : (
                  <>
                     <div></div>
-
                     {pointGroups.length !== 0 ? (
 
-                         <div className="flex justify-end">
-                            <p className="bg-white/70 h-full rounded-xl px-3 py-1 flex items-center text-[1.5vmax] font-bold text-green-500">
-                                ЖЕСТ ЗАПИСАН
+                        <div className="flex justify-end">
+                            <p className={`bg-white/70 h-full rounded-xl px-3 py-1 flex items-center text-[1.5vmax] font-bold ${
+                                typeof pointGroups[0] === 'string' ? 'text-red-500' : 'text-green-600'
+                            }`}>
+
+                                { typeof pointGroups[0] === 'string' ? pointGroups[0] : 'ЖЕСТ ЗАПИСАН'}
+
                             </p>
                         </div>
 
                     ) : (
 
-                       <div></div>
+                        <div></div>
 
                     )}
 
