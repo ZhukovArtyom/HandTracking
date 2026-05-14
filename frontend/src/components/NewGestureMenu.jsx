@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import action_img from '../assets/action_icon.png'
 import plus_img from '../assets/plus_icon.png'
 import hand_blue_bg_img from '../assets/hand_blue_bg.png'
+import no_img_img from '../assets/no_img_icon.png'
 
 function NewGestureMenu({onCancel, onSave, onRecordGesture, selectedAction, gestureName, gestureIcon, onGestureNameChange, pythonStatus}) {
 
@@ -23,8 +24,9 @@ function NewGestureMenu({onCancel, onSave, onRecordGesture, selectedAction, gest
 
                       <div class="h-3/10 flex items-center pb-[1.5vmax]">
                             <img id="gesture_icon"
-                                src={gestureIcon}
+                                src={gestureIcon ? gestureIcon : no_img_img}
                                 style={{
+
                                     objectFit: 'contain'
                                   }}
                                 class="h-full aspect-[1/1] bg-[rgb(6,207,249)] border-1

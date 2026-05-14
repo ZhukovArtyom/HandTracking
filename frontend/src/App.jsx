@@ -78,6 +78,7 @@ function App() {
   const RecordGesture = async () => {
 
       setPointGroups([])
+      setGestureIcon(null)
 
 
       if (!apiReady) return
@@ -103,6 +104,7 @@ function App() {
   const handleCloseAddGesture = () => {
     setShowAddGestureForm(false)
     setSelectedGestureAction(null)
+    setGestureIcon(null)
     setNewGestureName('')
     setPointGroups([])
 
@@ -177,6 +179,7 @@ function App() {
         // Очищаем форму и закрываем
       setNewGestureName('')
       setSelectedGestureAction(null)
+      setGestureIcon(null)
       setPointGroups([])
 
 
@@ -386,6 +389,7 @@ function App() {
   useEffect(() => {
     if (window.electronAPI?.onIcon) {
       window.electronAPI.onIcon((iconData) => {
+
         setGestureIcon(`data:image/png;base64,${iconData}`)
       })
     }
