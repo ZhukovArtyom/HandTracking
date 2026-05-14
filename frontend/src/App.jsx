@@ -27,6 +27,7 @@ function App() {
   const [newGestureName, setNewGestureName] = useState('')
   const [pointGroups, setPointGroups] = useState([])
   const [selectedGestureAction, setSelectedGestureAction] = useState(null)
+  const [gestureIcon, setGestureIcon] = useState(null)
 
 
   const cursorMenuRef = useRef(null)
@@ -377,6 +378,15 @@ function App() {
     if (window.electronAPI?.onPointGroups) {
       window.electronAPI.onPointGroups((pointsData) => {
         setPointGroups(pointsData)
+      })
+    }
+  }, [])
+
+  // Получение иконки жеста
+  useEffect(() => {
+    if (window.electronAPI?.onIcon) {
+      window.electronAPI.onIcon((iconData) => {
+        setGestureIcon(`data:image/png;base64,${iconData}`)
       })
     }
   }, [])
@@ -734,6 +744,7 @@ function App() {
               onRecordGesture={RecordGesture}
               selectedAction={selectedGestureAction}
               gestureName={newGestureName}
+              gestureIcon={gestureIcon}
               onGestureNameChange={setNewGestureName}
               pythonStatus={pythonStatus}
 

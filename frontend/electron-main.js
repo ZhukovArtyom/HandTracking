@@ -127,6 +127,10 @@ ipcMain.handle('start-python', async (event, scriptFile) => {
             console.error('Failed to parse point groups:', e, 'Data:', str_data)
         }
     }
+    else if (output.startsWith('ICON:')) {
+        const iconData = output.substring(5)
+        mainWindow?.webContents.send('icon', iconData)
+    }
     else {
       console.log(`Python: ${output}`)
       mainWindow?.webContents.send('python-log', output)

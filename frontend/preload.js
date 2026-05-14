@@ -32,6 +32,9 @@ const electronAPI = {
   onPointGroups: (callback) => {
     ipcRenderer.on('point-groups', (event, pointsData) => callback(pointsData))
   },
+  onIcon: (callback) => {
+    ipcRenderer.on('icon', (event, iconData) => callback(iconData))
+  },
   readGestures: () => {
     console.log('readGestures called')
     return ipcRenderer.invoke('read-gestures')
