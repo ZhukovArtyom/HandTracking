@@ -109,6 +109,7 @@ class GestureRecorder:
 
                         # Подготовка данных для анализа пересечений
                         landmarks_dict = {'right': None, 'left': None}
+                        hands_detected = {'right': False, 'left': False}
 
                         # Отрисовка рук
                         if detection_result.hand_landmarks and detection_result.handedness:
@@ -122,9 +123,27 @@ class GestureRecorder:
                                     hand_type = 'left'
 
                                 landmarks_dict[hand_type] = landmarks
+                                hands_detected[hand_type] = True
 
                         # Находим группы пересекающихся точек
                         intersecting_groups = self.find_intersecting_point_groups(landmarks_dict)
+
+                        if hands_detected['right'] and hands_detected['left'] and intersecting_groups:
+                            # Проверяем, есть ли в группах точки из обеих рук
+                            has_main = False
+                            has_second = False
+                            for group in intersecting_groups:
+                                if any('main' in point for point in group):
+                                    has_main = True
+                                if any('second' in point for point in group):
+                                    has_second = True
+                                if has_main and has_second:
+                                    break
+
+                            # Если нет групп с точками из обеих рук - жест некорректный
+                            if not (has_main and has_second):
+                                print(f"POINT_GROUPS:[\"НЕКОРРЕКТНЫЙ ДВУРУЧНЫЙ ЖЕСТ\"]")
+                                continue
 
                         if intersecting_groups:
                             # Форматируем вывод

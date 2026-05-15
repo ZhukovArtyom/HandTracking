@@ -19,6 +19,134 @@
       "type": "naruto",
       "on_press": "",
       "on_release": ""
+    },
+    {
+      "id": "1778865194096",
+      "name": "Ворд",
+      "action_name": "Microsoft Word 2010",
+      "image": "gestures_icons/gesture_1778865194094.png",
+      "enabled": true,
+      "points_groups": [
+        [
+          "main_4",
+          "second_4"
+        ],
+        [
+          "main_8",
+          "second_8"
+        ]
+      ],
+      "type": "program",
+      "on_press": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Microsoft Office\\Microsoft Word 2010.lnk",
+      "on_release": ""
+    },
+    {
+      "id": "1778865207559",
+      "name": "Вниз",
+      "action_name": "Прокрутка вниз",
+      "image": "gestures_icons/gesture_1778865207557.png",
+      "enabled": true,
+      "points_groups": [
+        [
+          "main_12",
+          "main_8"
+        ],
+        [
+          "main_12",
+          "main_16"
+        ],
+        [
+          "main_16",
+          "main_20"
+        ]
+      ],
+      "type": "system",
+      "on_press": "wheel_down",
+      "on_release": ""
+    },
+    {
+      "id": "1778865217744",
+      "name": "Вверх",
+      "action_name": "Прокрутка вверх",
+      "image": "gestures_icons/gesture_1778865217741.png",
+      "enabled": true,
+      "points_groups": [
+        [
+          "main_12",
+          "main_16"
+        ],
+        [
+          "main_16",
+          "main_20"
+        ]
+      ],
+      "type": "system",
+      "on_press": "wheel_up",
+      "on_release": ""
+    },
+    {
+      "id": "1778865240145",
+      "name": "Громкость плюс",
+      "action_name": "Громкость +",
+      "image": "gestures_icons/gesture_1778865240144.png",
+      "enabled": true,
+      "points_groups": [
+        [
+          "main_8",
+          "second_8"
+        ]
+      ],
+      "type": "system",
+      "on_press": "volume_up",
+      "on_release": ""
+    },
+    {
+      "id": "1778865251664",
+      "name": "Громкость минус",
+      "action_name": "Громкость -",
+      "image": "gestures_icons/gesture_1778865251663.png",
+      "enabled": true,
+      "points_groups": [
+        [
+          "main_4",
+          "second_8"
+        ]
+      ],
+      "type": "system",
+      "on_press": "volume_down",
+      "on_release": ""
+    },
+    {
+      "id": "1778865262915",
+      "name": "Клик л",
+      "action_name": "Клик ЛКМ",
+      "image": "gestures_icons/gesture_1778865262913.png",
+      "enabled": true,
+      "points_groups": [
+        [
+          "main_4",
+          "main_8"
+        ]
+      ],
+      "type": "system",
+      "on_press": "left_click_press",
+      "on_release": "left_click_release"
+    },
+    {
+      "id": "1778865274473",
+      "name": "Клик п",
+      "action_name": "Клик ПКМ",
+      "image": "gestures_icons/gesture_1778865274471.png",
+      "enabled": true,
+      "points_groups": [
+        [
+          "main_12",
+          "main_4"
+        ]
+      ],
+      "type": "system",
+      "on_press": "right_click_press",
+      "on_release": "right_click_release"
     }
   ]
 }
