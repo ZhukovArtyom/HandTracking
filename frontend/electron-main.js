@@ -73,6 +73,8 @@ ipcMain.handle('save-settings', async (event, newSettings) => {
   }
 })
 
+
+
 ipcMain.handle('start-python', async (event, scriptFile) => {
   if (pythonProcess) {
     return { success: false, message: 'Python already running' }
@@ -196,6 +198,47 @@ ipcMain.handle('read-gestures', async () => {
     console.error('Error reading gestures:', error)
     return { gestures: [] }
   }
+})
+
+ipcMain.handle('save-icon', async (event, { filename, data }) => {
+    try {
+
+        const projectRoot = path.join(__dirname, '..')
+        const iconsDir = path.join(projectRoot, 'frontend', 'public', 'gestures_icons')
+
+        // Создаём директорию, если её нет
+        if (!fs.existsSync(iconsDir)) {
+            fs.mkdirSync(iconsDir, { recursive: true })
+        }
+
+        const iconPath = path.join(iconsDir, filename)
+        const buffer = Buffer.from(data, 'base64')
+        fs.writeFileSync(iconPath, buffer)
+
+        const relativePath = `gestures_icons/${filename}`
+        return { success: true, path: relativePath }
+    } catch (error) {
+        console.error('Error saving icon:', error)
+        return { success: false, error: error.message }
+    }
+})
+
+ipcMain.handle('delete-icon', async (event, { iconPath }) => {
+    try {
+
+        const projectRoot = path.join(__dirname, '..')
+        const fullPath = path.join(projectRoot, 'frontend', 'public', iconPath)
+
+        if (fs.existsSync(fullPath)) {
+            fs.unlinkSync(fullPath)
+            return { success: true }
+        } else {
+            return { success: true, message: 'File already deleted' }
+        }
+    } catch (error) {
+        console.error('Error deleting icon:', error)
+        return { success: false, error: error.message }
+    }
 })
 
 ipcMain.handle('save-gestures', async (event, gesturesData) => {

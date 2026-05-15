@@ -19,7 +19,14 @@ function GestureCard({ gesture, onToggle, onEdit, onDelete }) {
         <div className="h-3/4 w-full py-2 flex">
             <div className="h-full aspect-[1/1] rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                     {gesture.image ? (
-                        <img src={gesture.image} alt={gesture.name} className="w-full h-full object-cover" />
+                        <img src={gesture.image}
+
+                            style={{
+                                objectFit: 'contain'
+                            }}
+
+                            className="w-full h-full object-cover bg-[rgb(6,207,249)]"
+                        />
                       ) : (
                         <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
@@ -69,7 +76,7 @@ function GestureCard({ gesture, onToggle, onEdit, onDelete }) {
 
 
                 <p className="text-[2vmax] font-regular text-black text-left overflow-hidden truncate text-ellipsis">
-                  {gesture.action_name || 'Действие'}
+                  {'Действие: ' + gesture.action_name || 'Действие'}
                 </p>
 
         </div>

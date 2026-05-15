@@ -19,38 +19,6 @@
       "type": "naruto",
       "on_press": "",
       "on_release": ""
-    },
-    {
-      "id": "1778698391857",
-      "name": "Клик лкм",
-      "action_name": "Клик ЛКМ",
-      "image": "",
-      "enabled": true,
-      "points_groups": [
-        [
-          "main_4",
-          "main_8"
-        ]
-      ],
-      "type": "system",
-      "on_press": "left_click_press",
-      "on_release": "left_click_release"
-    },
-    {
-      "id": "1778698417323",
-      "name": "Клик пкм",
-      "action_name": "Клик ПКМ",
-      "image": "",
-      "enabled": true,
-      "points_groups": [
-        [
-          "main_12",
-          "main_4"
-        ]
-      ],
-      "type": "system",
-      "on_press": "right_click_press",
-      "on_release": "right_click_release"
     }
   ]
 }

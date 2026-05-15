@@ -35,6 +35,12 @@ const electronAPI = {
   onIcon: (callback) => {
     ipcRenderer.on('icon', (event, iconData) => callback(iconData))
   },
+  saveIcon: (data) => {
+    return ipcRenderer.invoke('save-icon', data)
+  },
+  deleteIcon: (data) => {
+    return ipcRenderer.invoke('delete-icon', data)
+  },
   readGestures: () => {
     console.log('readGestures called')
     return ipcRenderer.invoke('read-gestures')

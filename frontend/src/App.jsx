@@ -112,7 +112,7 @@ function App() {
 
   }
 
-  const handleSaveNewGesture = () => {
+  const handleSaveNewGesture = async () => {
 
 
       if (pointGroups.length === 0 || typeof pointGroups[0] === 'string') {
@@ -154,12 +154,41 @@ function App() {
           return
       }
 
+      let save_icon_path = ""
+      if (gestureIcon && gestureIcon !== '') {
+          try {
+
+              const base64Data = gestureIcon.split(',')[1]
+
+              const timestamp = Date.now()
+              const filename = `gesture_${timestamp}.png`
+
+              if (window.electronAPI?.saveIcon) {
+                  const result = await window.electronAPI.saveIcon({
+                      filename: filename,
+                      data: base64Data
+                  })
+
+                  if (result && result.success) {
+                      save_icon_path = result.path
+                  } else {
+                      console.error('Failed to save icon:', result?.error)
+                  }
+              }
+          } catch (error) {
+              console.error('Error saving icon:', error)
+              save_icon_path = ""
+          }
+      } else {
+          console.log('No gestureIcon to save')
+      }
+
       // Создаём новый жест
       const newGesture = {
-          id: Date.now().toString(), // уникальный ID на основе времени
+          id: Date.now().toString(),
           name: newGestureName,
           action_name: selectedGestureAction.displayName,
-          image: "",
+          image: save_icon_path,
           enabled: true,
           points_groups: pointGroups,
           type: selectedGestureAction.type,
@@ -234,20 +263,37 @@ function App() {
   }
 
   const confirmDelete = async () => {
-    if (gestureToDelete) {
-      // Удаляем жест
-      const updatedGestures = gestures.filter(g => g.id !== gestureToDelete)
-      setGestures(updatedGestures)
+        if (gestureToDelete) {
+          // Находим жест, который удаляем
+          const gestureToRemove = gestures.find(g => g.id === gestureToDelete)
 
-      // Сохраняем в файл
-      if (window.electronAPI?.saveGestures) {
-        await window.electronAPI.saveGestures({ gestures: updatedGestures })
-      }
+          // Удаляем файл иконки, если она есть
+          if (gestureToRemove && gestureToRemove.image && gestureToRemove.image !== '') {
+            try {
+              if (window.electronAPI?.deleteIcon) {
+                const result = await window.electronAPI.deleteIcon({
+                  iconPath: gestureToRemove.image
+                })
 
-      // Закрываем модальное окно
-      setShowDeleteModal(false)
-      setGestureToDelete(null)
-    }
+              }
+            } catch (error) {
+              console.error('Error deleting icon file:', error)
+            }
+          }
+
+          // Удаляем жест из списка
+          const updatedGestures = gestures.filter(g => g.id !== gestureToDelete)
+          setGestures(updatedGestures)
+
+          // Сохраняем обновлённый список в файл
+          if (window.electronAPI?.saveGestures) {
+            await window.electronAPI.saveGestures({ gestures: updatedGestures })
+          }
+
+          // Закрываем модальное окно
+          setShowDeleteModal(false)
+          setGestureToDelete(null)
+        }
   }
 
   const cancelDelete = () => {
