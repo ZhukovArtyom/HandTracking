@@ -1,30 +1,6 @@
 {
   "gestures": [
     {
-      "id": "1779126146165",
-      "name": "Пэинт",
-      "action_name": "Paint",
-      "image": "gestures_icons/gesture_1779126146163.png",
-      "enabled": true,
-      "points_groups": [
-        [
-          "second_12",
-          "second_8"
-        ],
-        [
-          "second_12",
-          "second_16"
-        ],
-        [
-          "second_16",
-          "second_20"
-        ]
-      ],
-      "type": "program",
-      "on_press": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Accessories\\Paint.lnk",
-      "on_release": ""
-    },
-    {
       "id": "1778258324468",
       "name": "Расенган",
       "action_name": "Razengan",
@@ -63,6 +39,26 @@
       "type": "keyboard",
       "on_press": "print screen",
       "on_release": "print screen"
+    },
+    {
+      "id": "1779132720551",
+      "name": "Экранная клавиатура",
+      "action_name": "Free Virtual Keyboard",
+      "image": "gestures_icons/gesture_1779132720549.png",
+      "enabled": true,
+      "points_groups": [
+        [
+          "second_12",
+          "second_4"
+        ],
+        [
+          "second_12",
+          "second_16"
+        ]
+      ],
+      "type": "program",
+      "on_press": "ComfortSoftwareGroup.FreeVirtualKeyboard_2tsmkga83t66w!FREEVK:",
+      "on_release": ""
     },
     {
       "id": "1778865262915",

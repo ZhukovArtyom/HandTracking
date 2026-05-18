@@ -367,7 +367,7 @@ class GestureRecognizer:
         elif gesture_type == "program":
             if not on_release:
                 path = gesture['on_press']
-                if path.startswith('C'):
+                if path.startswith('C:'):
                     os.startfile(path)
                 else:
                     subprocess.run(f'explorer.exe shell:AppsFolder\\{path}', shell=True)
