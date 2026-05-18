@@ -196,8 +196,12 @@ function App() {
           on_release: selectedGestureAction.on_release || ""
       }
 
-        // Добавляем в список жестов
-      const updatedGestures = [...gestures, newGesture]
+        // Добавляем в список жестов и сортируем список по длине points_groups
+      const updatedGestures = [...gestures, newGesture].sort((a, b) => {
+            const lenA = a.points_groups?.length || 0
+            const lenB = b.points_groups?.length || 0
+            return lenB - lenA  // чем больше длина, тем выше в списке
+      })
       setGestures(updatedGestures)
 
         // Сохраняем в файл
@@ -282,7 +286,13 @@ function App() {
           }
 
           // Удаляем жест из списка
-          const updatedGestures = gestures.filter(g => g.id !== gestureToDelete)
+          const updatedGestures = gestures.filter(g => g.id !== gestureToDelete).sort((a, b) => {
+                const lenA = a.points_groups?.length || 0
+                const lenB = b.points_groups?.length || 0
+                return lenB - lenA  // чем больше длина, тем выше в списке
+          })
+
+
           setGestures(updatedGestures)
 
           // Сохраняем обновлённый список в файл

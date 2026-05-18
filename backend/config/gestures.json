@@ -1,6 +1,30 @@
 {
   "gestures": [
     {
+      "id": "1779126146165",
+      "name": "Пэинт",
+      "action_name": "Paint",
+      "image": "gestures_icons/gesture_1779126146163.png",
+      "enabled": true,
+      "points_groups": [
+        [
+          "second_12",
+          "second_8"
+        ],
+        [
+          "second_12",
+          "second_16"
+        ],
+        [
+          "second_16",
+          "second_20"
+        ]
+      ],
+      "type": "program",
+      "on_press": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Accessories\\Paint.lnk",
+      "on_release": ""
+    },
+    {
       "id": "1778258324468",
       "name": "Расенган",
       "action_name": "Razengan",
@@ -21,100 +45,24 @@
       "on_release": ""
     },
     {
-      "id": "1778865194096",
-      "name": "Ворд",
-      "action_name": "Microsoft Word 2010",
-      "image": "gestures_icons/gesture_1778865194094.png",
+      "id": "1779126019503",
+      "name": "Скриншот",
+      "action_name": "print screen",
+      "image": "gestures_icons/gesture_1779126019323.png",
       "enabled": true,
       "points_groups": [
         [
           "main_4",
+          "second_8"
+        ],
+        [
+          "main_8",
           "second_4"
-        ],
-        [
-          "main_8",
-          "second_8"
         ]
       ],
-      "type": "program",
-      "on_press": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Microsoft Office\\Microsoft Word 2010.lnk",
-      "on_release": ""
-    },
-    {
-      "id": "1778865207559",
-      "name": "Вниз",
-      "action_name": "Прокрутка вниз",
-      "image": "gestures_icons/gesture_1778865207557.png",
-      "enabled": true,
-      "points_groups": [
-        [
-          "main_12",
-          "main_8"
-        ],
-        [
-          "main_12",
-          "main_16"
-        ],
-        [
-          "main_16",
-          "main_20"
-        ]
-      ],
-      "type": "system",
-      "on_press": "wheel_down",
-      "on_release": ""
-    },
-    {
-      "id": "1778865217744",
-      "name": "Вверх",
-      "action_name": "Прокрутка вверх",
-      "image": "gestures_icons/gesture_1778865217741.png",
-      "enabled": true,
-      "points_groups": [
-        [
-          "main_12",
-          "main_16"
-        ],
-        [
-          "main_16",
-          "main_20"
-        ]
-      ],
-      "type": "system",
-      "on_press": "wheel_up",
-      "on_release": ""
-    },
-    {
-      "id": "1778865240145",
-      "name": "Громкость плюс",
-      "action_name": "Громкость +",
-      "image": "gestures_icons/gesture_1778865240144.png",
-      "enabled": true,
-      "points_groups": [
-        [
-          "main_8",
-          "second_8"
-        ]
-      ],
-      "type": "system",
-      "on_press": "volume_up",
-      "on_release": ""
-    },
-    {
-      "id": "1778865251664",
-      "name": "Громкость минус",
-      "action_name": "Громкость -",
-      "image": "gestures_icons/gesture_1778865251663.png",
-      "enabled": true,
-      "points_groups": [
-        [
-          "main_4",
-          "second_8"
-        ]
-      ],
-      "type": "system",
-      "on_press": "volume_down",
-      "on_release": ""
+      "type": "keyboard",
+      "on_press": "print screen",
+      "on_release": "print screen"
     },
     {
       "id": "1778865262915",
@@ -147,6 +95,38 @@
       "type": "system",
       "on_press": "right_click_press",
       "on_release": "right_click_release"
+    },
+    {
+      "id": "1779126115395",
+      "name": "Вставить",
+      "action_name": "ctrl+v",
+      "image": "gestures_icons/gesture_1779126115392.png",
+      "enabled": true,
+      "points_groups": [
+        [
+          "second_12",
+          "second_4"
+        ]
+      ],
+      "type": "keyboard",
+      "on_press": "ctrl+v",
+      "on_release": "ctrl+v"
+    },
+    {
+      "id": "1779126530496",
+      "name": "Копировать",
+      "action_name": "ctrl+c",
+      "image": "gestures_icons/gesture_1779126530494.png",
+      "enabled": true,
+      "points_groups": [
+        [
+          "second_4",
+          "second_8"
+        ]
+      ],
+      "type": "keyboard",
+      "on_press": "ctrl+c",
+      "on_release": "ctrl+c"
     }
   ]
 }

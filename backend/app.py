@@ -8,13 +8,14 @@ import psutil
 import os
 import base64
 
+# Для управления курсором
+import ctypes
+
 import json
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-# --- Импорты для управления курсором (Windows) ---
-import win32api
-import win32con
+
 
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
@@ -297,7 +298,8 @@ class AdvancedCursorController:
 
                     if target_pos is not None:
                         smoothed_pos = self.apply_smoothing(target_pos[0], target_pos[1])
-                        win32api.SetCursorPos((int(smoothed_pos[0]), int(smoothed_pos[1])))
+                        ctypes.windll.user32.SetCursorPos(int(smoothed_pos[0]), int(smoothed_pos[1]))
+
 
             else:
                 time.sleep(0.001)

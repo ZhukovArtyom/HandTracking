@@ -3,8 +3,10 @@ import time
 import threading
 import os
 import numpy as np
-import win32api
-import win32con
+
+# Для кликов и колёсика мыши
+import ctypes
+
 import keyboard
 import subprocess
 
@@ -315,28 +317,30 @@ class GestureRecognizer:
         if gesture_type == "system":
             action = gesture['on_press'] if not on_release else gesture['on_release']
             if action == 'left_click_press':
-                win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
+                ctypes.windll.user32.mouse_event(0x0002, 0, 0, 0, 0)
+
 
             elif action == 'left_click_release':
-                win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+                ctypes.windll.user32.mouse_event(0x0004, 0, 0, 0, 0)
+
 
             elif action == 'double_click':
-                win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
-                win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
-                win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
-                win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+                ctypes.windll.user32.mouse_event(0x0002, 0, 0, 0, 0)
+                ctypes.windll.user32.mouse_event(0x0004, 0, 0, 0, 0)
+                ctypes.windll.user32.mouse_event(0x0002, 0, 0, 0, 0)
+                ctypes.windll.user32.mouse_event(0x0004, 0, 0, 0, 0)
 
             elif action == 'right_click_press':
-                win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0)
+                ctypes.windll.user32.mouse_event(0x0008, 0, 0, 0, 0)
 
             elif action == 'right_click_release':
-                win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0)
+                ctypes.windll.user32.mouse_event(0x0010, 0, 0, 0, 0)
 
             elif action == 'wheel_press':
-                win32api.mouse_event(win32con.MOUSEEVENTF_MIDDLEDOWN, 0, 0, 0, 0)
+                ctypes.windll.user32.mouse_event(0x0020, 0, 0, 0, 0)
 
             elif action == 'wheel_release':
-                win32api.mouse_event(win32con.MOUSEEVENTF_MIDDLEUP, 0, 0, 0, 0)
+                ctypes.windll.user32.mouse_event(0x0040, 0, 0, 0, 0)
 
             elif action == 'wheel_up':
                 self.hold_action(gesture['id'], action)
@@ -389,9 +393,9 @@ class GestureRecognizer:
                 elif action == 'volume_down':
                     keyboard.press('volume down')
                 elif action == 'wheel_up':
-                    win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, 0, 0, 30, 0)
+                    ctypes.windll.user32.mouse_event(0x0800, 0, 0, 30, 0)
                 elif action == 'wheel_down':
-                    win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, 0, 0, -30, 0)
+                    ctypes.windll.user32.mouse_event(0x0800, 0, 0, -30, 0)
 
 
                 time.sleep(0.03)
