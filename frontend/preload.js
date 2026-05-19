@@ -38,6 +38,9 @@ const electronAPI = {
   saveIcon: (data) => {
     return ipcRenderer.invoke('save-icon', data)
   },
+  getIcon: (iconPath) => {
+    return ipcRenderer.invoke('get-icon', iconPath);
+  },
   deleteIcon: (data) => {
     return ipcRenderer.invoke('delete-icon', data)
   },

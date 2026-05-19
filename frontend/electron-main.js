@@ -6,6 +6,26 @@ const { spawn } = require('child_process')
 let pythonProcess = null
 let mainWindow = null
 
+// Функция получения пути к python.exe
+function getPythonPath() {
+  if (process.env.NODE_ENV === 'development') {
+    return 'python';  // используем системный Python в разработке
+  } else {
+    // В продакшене используем упакованный Python из resources
+    const pythonExe = path.join(process.resourcesPath, 'python-embedded', 'python.exe');
+    return pythonExe;
+  }
+}
+
+// Функция для получения правильного пути в режиме разработки и продакшн
+function getResourcePath(relativePath) {
+  if (process.env.NODE_ENV === 'development') {
+    return path.join(__dirname, '..', relativePath)
+  } else {
+    return path.join(process.resourcesPath, relativePath)
+  }
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 640,
@@ -19,15 +39,14 @@ function createWindow() {
 
   if (process.env.NODE_ENV === 'development') {
     mainWindow.loadURL('http://localhost:5173')
-    mainWindow.webContents.openDevTools()
   } else {
-    mainWindow.loadFile('dist/index.html')
+    const indexPath = path.join(__dirname, 'dist', 'index.html')
+    mainWindow.loadFile(indexPath)
   }
 }
 
 function getSettingsPath() {
-  const projectRoot = path.join(__dirname, '..')
-  return path.join(projectRoot, 'backend', 'config', 'settings.json')
+  return getResourcePath(path.join('backend', 'config', 'settings.json'))
 }
 
 ipcMain.handle('read-settings', async () => {
@@ -80,36 +99,45 @@ ipcMain.handle('start-python', async (event, scriptFile) => {
     return { success: false, message: 'Python already running' }
   }
 
-  let scriptPath = path.join(__dirname, '..', 'backend')
+  const backendPath = getResourcePath('backend')
+  let scriptPath
 
   if (scriptFile === "main") {
-    scriptPath = path.join(scriptPath, 'app.py')
+    scriptPath = path.join(backendPath, 'app.py')
   }
   else {
-     scriptPath = path.join(scriptPath, 'gesture_recorder.py')
+    scriptPath = path.join(backendPath, 'gesture_recorder.py')
   }
 
-  const backendDir = path.join(__dirname, '..', 'backend')
   console.log('Script path:', scriptPath)
-  console.log('Working directory:', backendDir)
+  console.log('Working directory:', backendPath)
 
   if (!fs.existsSync(scriptPath)) {
     console.error('Python script not found at:', scriptPath)
     return { success: false, message: 'Python script not found' }
   }
 
-  pythonProcess = spawn('python', [scriptPath], {
-    cwd: backendDir,
+  const pythonPath = getPythonPath();
+
+  if (!fs.existsSync(pythonPath) && process.env.NODE_ENV !== 'development') {
+    console.error('Python not found at:', pythonPath);
+    return { success: false, message: 'Python executable not found' };
+  }
+
+  pythonProcess = spawn(pythonPath, [scriptPath], {
+    cwd: backendPath,
     env: {
       ...process.env,
       PYTHONUNBUFFERED: '1',
-      PYTHONIOENCODING: 'utf-8'
+      PYTHONIOENCODING: 'utf-8',
+      PYTHONPATH: backendPath
     }
   })
 
   // ЕДИНЫЙ ОБРАБОТЧИК stdout
   pythonProcess.stdout.on('data', (data) => {
     const output = data.toString('utf-8')
+    console.log('Python stdout:', output)
 
     // Проверяем, что это кадр (начинается с "FRAME:")
     if (output.startsWith('FRAME:')) {
@@ -184,7 +212,7 @@ ipcMain.handle('get-python-status', async () => {
 
 ipcMain.handle('read-gestures', async () => {
   try {
-    const gesturesPath = path.join(__dirname, '..', 'backend', 'config', 'gestures.json')
+    const gesturesPath = getResourcePath(path.join('backend', 'config', 'gestures.json'))
     console.log('Reading gestures from:', gesturesPath)
 
     if (fs.existsSync(gesturesPath)) {
@@ -202,14 +230,11 @@ ipcMain.handle('read-gestures', async () => {
 
 ipcMain.handle('save-icon', async (event, { filename, data }) => {
     try {
+        const iconsDir = getResourcePath(path.join('gestures_icons'))
 
-        const projectRoot = path.join(__dirname, '..')
-        const iconsDir = path.join(projectRoot, 'frontend', 'public', 'gestures_icons')
-
-        // Создаём директорию, если её нет
         if (!fs.existsSync(iconsDir)) {
-            fs.mkdirSync(iconsDir, { recursive: true })
-        }
+            fs.mkdirSync(iconsDir, { recursive: true });        }
+
 
         const iconPath = path.join(iconsDir, filename)
         const buffer = Buffer.from(data, 'base64')
@@ -223,11 +248,26 @@ ipcMain.handle('save-icon', async (event, { filename, data }) => {
     }
 })
 
+ipcMain.handle('get-icon', async (event, iconPath) => {
+    try {
+        const fullPath = getResourcePath(iconPath);
+
+        if (fs.existsSync(fullPath)) {
+            const buffer = fs.readFileSync(fullPath);
+            return buffer.toString('base64');
+        } else {
+            console.error('Icon not found:', fullPath);
+            return null;
+        }
+    } catch (error) {
+        console.error('Error reading icon:', error);
+        return null;
+    }
+});
+
 ipcMain.handle('delete-icon', async (event, { iconPath }) => {
     try {
-
-        const projectRoot = path.join(__dirname, '..')
-        const fullPath = path.join(projectRoot, 'frontend', 'public', iconPath)
+        const fullPath = getResourcePath(iconPath)
 
         if (fs.existsSync(fullPath)) {
             fs.unlinkSync(fullPath)
@@ -243,7 +283,7 @@ ipcMain.handle('delete-icon', async (event, { iconPath }) => {
 
 ipcMain.handle('save-gestures', async (event, gesturesData) => {
   try {
-    const gesturesPath = path.join(__dirname, '..', 'backend', 'config', 'gestures.json')
+    const gesturesPath = getResourcePath(path.join('backend', 'config', 'gestures.json'))
     fs.writeFileSync(gesturesPath, JSON.stringify(gesturesData, null, 2), 'utf8')
     console.log('Gestures saved successfully')
     return { success: true }

@@ -3,6 +3,7 @@ import time
 import threading
 import os
 import numpy as np
+import sys
 
 # Для кликов и колёсика мыши
 import ctypes
@@ -10,7 +11,16 @@ import ctypes
 import keyboard
 import subprocess
 
-from pynput.keyboard import Key, Controller
+# Для режима разработки
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
+# Для собранного приложения добавляем resources/backend
+if getattr(sys, 'frozen', False):
+    resources_dir = os.path.join(os.path.dirname(sys.executable), 'resources', 'backend')
+    if resources_dir not in sys.path:
+        sys.path.insert(0, resources_dir)
 
 from config_loader import config
 

@@ -1,5 +1,5 @@
 {
-  "name": "hand-tracking-ui-react",
+  "name": "hand-tracking-control",
   "private": true,
   "version": "1.0.0",
   "main": "electron-main.js",
@@ -14,7 +14,7 @@
     "appId": "com.handtracking.app",
     "productName": "Hand Tracking Control",
     "directories": {
-      "output": "../dist"
+      "output": "release"
     },
     "files": [
       "dist/**/*",
@@ -23,16 +23,19 @@
     ],
     "extraResources": [
       {
-        "from": "../backend/",
-        "to": "backend/",
-        "filter": [
-          "**/*"
-        ]
+        "from": "../backend",
+        "to": "backend",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "python-embedded",
+        "to": "python-embedded"
       }
+
     ],
     "win": {
       "target": "nsis",
-      "icon": "public/icon.ico"
+      "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": false,

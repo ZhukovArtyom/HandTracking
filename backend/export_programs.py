@@ -1,6 +1,6 @@
 import subprocess
 import json
-import sys
+
 
 
 def get_full_start_menu_with_paths():

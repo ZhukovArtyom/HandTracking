@@ -1,10 +1,32 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect} from 'react'
 
 import settings_img from '../assets/settings_icon.png'
 import delete_img from '../assets/delete_icon.png'
 
 function GestureCard({ gesture, onToggle, onEdit, onDelete }) {
   const [isEnabled, setIsEnabled] = useState(gesture.enabled === true)
+
+  const [iconSrc, setIconSrc] = useState(null)
+
+  // Загружаем иконку при монтировании компонента
+  useEffect(() => {
+    const loadIcon = async () => {
+      if (gesture.image && gesture.image !== '') {
+        try {
+          // Запрашиваем иконку через Electron API
+          const base64Data = await window.electronAPI.getIcon(gesture.image)
+          if (base64Data) {
+            setIconSrc(`data:image/png;base64,${base64Data}`)
+          }
+        } catch (error) {
+          console.error('Error loading icon:', error)
+          setIconSrc(null)
+        }
+      }
+    }
+
+    loadIcon()
+  }, [gesture.image])
 
   const handleToggle = () => {
     const newState = !isEnabled
@@ -18,14 +40,14 @@ function GestureCard({ gesture, onToggle, onEdit, onDelete }) {
     <div className="h-full aspect-[6/5] bg-white rounded-xl shadow-[2px_2px_8px_rgba(0,0,0,0.25)] mr-3 p-[1.5vmax] flex flex-col ">
         <div className="h-3/4 w-full py-2 flex">
             <div className="h-full aspect-[1/1] rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                    {gesture.image ? (
-                        <img src={gesture.image}
-
-                            style={{
-                                objectFit: 'contain'
-                            }}
-
-                            className="w-full h-full object-cover bg-[rgb(6,207,249)]"
+                    {iconSrc ? (
+                        <img
+                          src={iconSrc}
+                          style={{
+                            objectFit: 'contain'
+                          }}
+                          className="w-full h-full bg-[rgb(6,207,249)]"
+                          alt={gesture.name}
                         />
                       ) : (
                         <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
