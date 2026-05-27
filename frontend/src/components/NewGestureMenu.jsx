@@ -16,7 +16,7 @@ function NewGestureMenu({onCancel, onSave, onRecordGesture, selectedAction, gest
                 <div class="w-full h-[5vmax] border-b-2 border-gray-300 flex items-center">
                     <div class="h-4/10 flex items-center ml-3">
                       <img src={plus_img} class="h-full m-[1vmax]" alt="config" />
-                      <p class="text-[2vmax]">Создание нового жеста</p>
+                      <p class="text-[2vmax] whitespace-nowrap">Создание нового жеста</p>
                     </div>
                   </div>
 
@@ -66,7 +66,7 @@ function NewGestureMenu({onCancel, onSave, onRecordGesture, selectedAction, gest
                               <p class="text-[2vmax] pl-[1vmax]">Действие</p>
                             </div>
 
-                            <p id="gestureAction" class="h-3/5 text-[1.7vmax] pl-[1vmax] border-1 border-gray-300 rounded-xl flex items-center">
+                            <p id="gestureAction" class="h-3/5 text-[1.7vmax] pl-[1vmax] border-1 border-gray-300 whitespace-nowrap rounded-xl flex items-center">
                                 {selectedAction ? selectedAction.displayName : 'Выберите из библиотеки'}
                             </p>
 

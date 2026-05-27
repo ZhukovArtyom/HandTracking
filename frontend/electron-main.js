@@ -28,8 +28,11 @@ function getResourcePath(relativePath) {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 640,
-    height: 640,
+    width: 660,
+    height: 700,
+    minWidth: 520,
+    minHeight: 560,
+    icon: path.join(__dirname, 'public', 'program_icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -43,6 +46,8 @@ function createWindow() {
     const indexPath = path.join(__dirname, 'dist', 'index.html')
     mainWindow.loadFile(indexPath)
   }
+
+  mainWindow.setMenu(null)
 }
 
 function getSettingsPath() {

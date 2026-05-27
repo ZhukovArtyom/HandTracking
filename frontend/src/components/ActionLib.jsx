@@ -69,7 +69,7 @@ function ActionLib({ onSelectAction }) {
   );
 
   return (
-    <div className="h-[42vmax] w-full bg-white border-t-2 border-gray-300 -mt-[6vmax] flex flex-col shadow-[0px_-2px_8px_rgba(0,0,0,0.25)]">
+    <div className="h-[47vmax] w-full bg-white border-t-2 border-gray-300 -mt-[7vmax] flex flex-col shadow-[0px_-2px_8px_rgba(0,0,0,0.25)]">
       <div className="h-[6vmax] w-full flex items-center justify-between py-[1.2vmax] px-[2vmax] border-b-2 border-gray-300">
         <div className="h-full flex items-center">
           <img src={action_img} className="h-full mr-[1vmax]" alt=""/>

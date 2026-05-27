@@ -10,6 +10,7 @@ import hand_white_bg_img from './assets/hand_white_bg.png'
 import moving_img from './assets/moving.png'
 import warning_img from './assets/warning_icon.png'
 import success_img from './assets/success_icon.png'
+import program_icon_img from './assets/program_icon.png'
 
 
 function App() {
@@ -53,6 +54,8 @@ function App() {
 
   const [timerCount, setTimerCount] = useState(0)
   const [timerActive, setTimerActive] = useState(false)
+
+
 
 
   // Таймер перед командой записать жест
@@ -610,11 +613,8 @@ function App() {
 
   return (
     <div className="w-full min-h-screen bg-white flex flex-col">
-      <div class="w-full h-[5vmax] bg-white border-b-2 border-gray-300 flex items-center">
-        <img src={hand_blue_bg_img} class="h-full py-[1vmax] ml-[1vmax] mr-[0.5vmax]" alt="config" />
-        <p class="text-[2vmax] text-[rgb(6,207,249)] font-bold">HandTrackingControl</p>
-      </div>
-      <div class="w-full h-[52vmax] bg-white p-[2vmax] flex">
+
+      <div class="w-full h-[55vmax] bg-white p-[2vmax] border-t-2 border-gray-300 flex">
         <div class="h-full ">
           <div class="relative w-[59vmax] aspect-[4/3]">
             <div class="absolute inset-0 bg-gray-800 rounded-xl overflow-hidden shadow-[4px_4px_8px_rgba(0,0,0,0.5)]">
@@ -782,7 +782,7 @@ function App() {
           <div class="w-full h-[5vmax] pt-[2vmax] flex">
             <button
               onClick={() => handlePythonToggle('main')}
-              class={`w-2/3 text-white text-[1.5vmax] rounded-xl transition-colors ${
+              class={`w-full text-white text-[1.5vmax] font-semibold rounded-xl transition-colors ${
                 pythonRunning
                   ? 'bg-red-500 hover:bg-red-700'
                   : 'bg-[rgb(6,207,249)] hover:bg-[rgb(5,180,220)]'
@@ -790,9 +790,7 @@ function App() {
             >
               {pythonRunning ? 'ОСТАНОВИТЬ' : 'ЗАПУСТИТЬ'}
             </button>
-            <button class="w-1/3 bg-white text-[1.5vmax] text-[rgb(6,207,249)] border-2 border-[rgb(6,207,249)] rounded-xl ml-3">
-              ПРОВЕРКА
-            </button>
+
           </div>
         </div>
 
@@ -831,9 +829,9 @@ function App() {
                   </div>
                 </button>
                 {cursorMenuOpen && (
-                  <div class="w-full text-xs">
+                  <div class="w-full text-xs py-[1vmax] border-b border-gray-300">
                     <div class="px-[3vmax] py-[0.5vmax]">
-                        <div class="h-[4vmax] flex items-center justify-between">
+                        <div class="h-[4vmax] flex items-center justify-between gap-[2vmax]">
                           <p class="text-[1.5vmax]">РАЗМЕР ОБЛАСТИ ОТСЛЕЖИВАНИЯ</p>
                           <p class="text-[1.5vmax] text-[rgb(6,207,249)] font-bold">{trackingSize}%</p>
                         </div>
@@ -903,14 +901,14 @@ function App() {
                   class="h-[4vmax] w-full text-black border-b border-gray-300 transition flex items-center"
                 >
                   <div class="h-5/10 flex items-center ml-[2vmax]">
-                    <img src={hand_blue_bg_img} class="h-full m-2" alt="gestures" />
-                    <p class="text-[1.7vmax]">Распознавание жестов</p>
+                    <img src={hand_white_bg_img} class="h-full m-2" alt="gestures" />
+                    <p class="text-[1.7vmax] ">Распознавание жестов</p>
                   </div>
                 </button>
                 {gestureMenuOpen && (
-                  <div class="w-full">
+                  <div class="w-full py-[1vmax]">
                     <div class="px-[3vmax] py-[0.5vmax]">
-                        <div class="h-[4vmax] flex items-center justify-between">
+                        <div class="h-[4vmax] flex items-center justify-between gap-[2vmax]">
                           <p class="text-[1.3vmax]">ЧУВСТВИТЕЛЬНОСТЬ РАСПОЗНАВАНИЯ ЖЕСТОВ</p>
                           <p class="text-[1.5vmax] text-[rgb(6,207,249)] font-bold">{gestureSensitivity}%</p>
                         </div>
@@ -927,9 +925,9 @@ function App() {
                         </div>
                     </div>
                     <div class="px-[3vmax] py-[0.5vmax]">
-                        <div class="h-[4vmax] flex items-center justify-between">
-                          <p class="text-[1.3vmax]">ЗАДЕРЖКА СРАБАТЫВАНИЯ ЖЕСТОВ</p>
-                          <p class="text-[1.5vmax] text-[rgb(6,207,249)] font-bold">{activationDelay} сек.</p>
+                        <div class="h-[4vmax] flex items-center justify-between gap-[2vmax]">
+                          <p class="text-[1.3vmax] ">ЗАДЕРЖКА СРАБАТЫВАНИЯ ЖЕСТОВ</p>
+                          <p class="text-[1.5vmax] text-[rgb(6,207,249)] font-bold whitespace-nowrap">{activationDelay} сек.</p>
                         </div>
                         <div class="h-[4vmax] flex items-center">
                           <input
@@ -953,7 +951,7 @@ function App() {
       </div>
 
 
-      <div class="w-full h-[38vmax] flex flex-col mt-[2vmax]">
+      <div class="w-full h-[40vmax] flex flex-col ">
 
         {showAddGestureForm ? (
             <ActionLib
@@ -964,8 +962,8 @@ function App() {
             <>
                 <div class="w-full h-[4vmax] px-[2vmax] flex justify-between">
                     <div class="h-full flex items-center">
-                      <img src={hand_white_bg_img} class="h-full" />
-                      <p class="text-[1.5vmax] ml-2">Библиотека жестов</p>
+                      <img src={hand_blue_bg_img} class="h-full" />
+                      <p class="text-[2vmax] font-semibold  ml-2">Библиотека жестов</p>
                     </div>
                     <button
                         disabled={pythonRunning}
@@ -994,8 +992,9 @@ function App() {
         )}
 
       </div>
-      <div class="w-full h-[3vmax] border-t-2 border-gray-300">
-                {/*   Подвал */}
+      <div class="w-full h-[5vmax] border-t-2 border-gray-300 flex items-center">
+          <img src={program_icon_img} class="h-full py-[1vmax] ml-[1vmax] mr-[0.5vmax]" alt="config" />
+          <p class="text-[2vmax] text-[rgb(6,207,249)] font-bold">РукоВодитель</p>
       </div>
 
 

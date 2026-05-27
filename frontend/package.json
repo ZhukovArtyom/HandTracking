@@ -1,5 +1,5 @@
 {
-  "name": "hand-tracking-control",
+  "name": "rukovoditel",
   "private": true,
   "version": "1.0.0",
   "main": "electron-main.js",
@@ -11,8 +11,8 @@
     "electron:build": "vite build && electron-builder"
   },
   "build": {
-    "appId": "com.handtracking.app",
-    "productName": "Hand Tracking Control",
+    "appId": "com.rukovoditel.app",
+    "productName": "RukoVoditel",
     "directories": {
       "output": "release"
     },
@@ -30,11 +30,16 @@
       {
         "from": "python-embedded",
         "to": "python-embedded"
+      },
+      {
+        "from": "../gestures_icons",
+        "to": "gestures_icons",
+        "filter": ["**/*"]
       }
-
     ],
     "win": {
       "target": "nsis",
+      "icon": "public/program_icon.ico",
       "signAndEditExecutable": false
     },
     "nsis": {
