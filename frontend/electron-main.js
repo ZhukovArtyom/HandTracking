@@ -98,6 +98,36 @@ ipcMain.handle('save-settings', async (event, newSettings) => {
 })
 
 
+ipcMain.handle('export-programs', async () => {
+  console.log('Exporting installed programs')
+
+  const backendPath = getResourcePath('backend')
+  scriptPath = path.join(backendPath, 'export_programs.py')
+
+  if (!fs.existsSync(scriptPath)) {
+    console.error('Python script not found at:', scriptPath)
+  }
+  const pythonPath = getPythonPath();
+
+  if (!fs.existsSync(pythonPath) && process.env.NODE_ENV !== 'development') {
+    console.error('Python not found at:', pythonPath);
+    return { success: false, message: 'Python executable not found' };
+  }
+
+  const exportProcess = spawn(pythonPath, [scriptPath], {
+    cwd: backendPath,
+    env: {
+      ...process.env,
+      PYTHONUNBUFFERED: '1',
+      PYTHONIOENCODING: 'utf-8',
+      PYTHONPATH: backendPath
+    }
+  })
+
+  console.log('Installed programs exported successfully')
+
+})
+
 
 ipcMain.handle('start-python', async (event, scriptFile) => {
   if (pythonProcess) {

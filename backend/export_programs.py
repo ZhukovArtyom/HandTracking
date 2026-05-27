@@ -1,5 +1,6 @@
 import subprocess
 import json
+import os
 
 
 
@@ -100,7 +101,10 @@ def main():
         # Сохраняем результат
         output = programs_data
 
-        with open("config/installed_programs.json", "w", encoding="utf-8") as f:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        full_path = os.path.join(script_dir, 'config/installed_programs.json')
+
+        with open(full_path, "w", encoding="utf-8") as f:
             json.dump(output, f, ensure_ascii=False, indent=2)
 
         print(f"✅ Сохранено в 'start_menu_programs_with_real_paths.json'")

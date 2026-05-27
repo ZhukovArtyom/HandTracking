@@ -57,7 +57,6 @@ function App() {
 
 
 
-
   // Таймер перед командой записать жест
   useEffect(() => {
     let interval = null
@@ -501,6 +500,29 @@ function App() {
     loadSettings()
   }, [])
 
+
+  // Поиск установленных программ при запуске
+  useEffect(() => {
+    const exportPrograms = async () => {
+      try {
+        if (window.electronAPI && window.electronAPI.exportPrograms) {
+          await window.electronAPI.exportPrograms()
+          console.log('Programs exported')
+        }
+        else {
+          console.log('Error while exporting programs')
+        }
+      } catch (error) {
+        console.error('Error while exporting programs')
+      }
+    }
+
+    exportPrograms()
+  }, [])
+
+
+
+
   // Подписка на изменения настроек извне
   useEffect(() => {
     if (window.electronAPI?.onSettingsChanged) {
@@ -605,6 +627,8 @@ function App() {
       startPython(scriptFile)
     }
   }
+
+
 
 
 

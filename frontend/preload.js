@@ -15,6 +15,10 @@ const electronAPI = {
     console.log('getPythonStatus called')
     return ipcRenderer.invoke('get-python-status')
   },
+  exportPrograms: () => {
+    console.log('exportPrograms called')
+    return ipcRenderer.invoke('export-programs')
+  },
   readSettings: () => {
     console.log('readSettings called')
     return ipcRenderer.invoke('read-settings')

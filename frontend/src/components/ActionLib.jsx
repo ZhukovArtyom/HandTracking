@@ -133,7 +133,7 @@ function ActionLib({ onSelectAction }) {
               ))
             ) : (
               <div className="text-center text-gray-500">
-                {searchTerm ? 'Ничего не найдено' : 'Нет доступных программ'}
+                {searchTerm ? 'Ничего не найдено' : '...'}
               </div>
             )}
           </div>
@@ -160,7 +160,7 @@ function ActionLib({ onSelectAction }) {
                   ))
                 ) : (
                   <div className="text-center text-gray-500">
-                    {searchTerm ? 'Ничего не найдено' : 'Нет доступных программ'}
+                    {searchTerm ? 'Ничего не найдено' : 'Нет доступных команд'}
                   </div>
                 )}
           </div>

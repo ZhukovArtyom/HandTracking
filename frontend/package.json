@@ -12,7 +12,7 @@
   },
   "build": {
     "appId": "com.rukovoditel.app",
-    "productName": "RukoVoditel",
+    "productName": "РукоВодитель",
     "directories": {
       "output": "release"
     },

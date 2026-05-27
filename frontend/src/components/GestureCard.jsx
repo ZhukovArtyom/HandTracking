@@ -59,12 +59,24 @@ function GestureCard({ gesture, onToggle, onEdit, onDelete }) {
             <div className="flex-1 flex flex-col items-end">
 
 
-                    <div className="h-1/5 w-full flex justify-end mb-[2.5vmax]">
+                    <div className="h-1/5 w-full flex justify-end items-center mb-[2.5vmax] gap-[1vmax]">
+{/*                             <button */}
+{/*                               onClick={() => onEdit && onEdit(gesture)} */}
+{/*                               className="h-full aspect-[1/1] mr-3" */}
+{/*                             > */}
+{/*                                 <img src={settings_img} class="h-full"/> */}
+{/*                             </button> */}
                             <button
-                              onClick={() => onEdit && onEdit(gesture)}
-                              className="h-full aspect-[1/1] mr-3"
-                            >
-                                <img src={settings_img} class="h-full"/>
+                                onClick={handleToggle}
+                                className={`relative inline-flex w-[5vmax] h-[3vmax] p-[0.5vmax] items-center rounded-full transition-colors ${
+                                  isEnabled ? 'bg-[rgb(6,207,249)]' : 'bg-gray-300'
+                                }`}
+                              >
+                                <span
+                                  className={`inline-block h-[2vmax] aspect-[1/1] transform rounded-full bg-white transition-transform ${
+                                    isEnabled ? 'translate-x-[2vmax]' : 'translate-x-[0.2vmax]'
+                                  }`}
+                              />
                             </button>
                             <button
                               onClick={() => onDelete && onDelete(gesture.id)}
@@ -74,18 +86,7 @@ function GestureCard({ gesture, onToggle, onEdit, onDelete }) {
                             </button>
                      </div>
 
-                    <button
-                        onClick={handleToggle}
-                        className={`relative inline-flex w-1/2 aspect-[2/1] py-1 items-center rounded-full transition-colors ${
-                          isEnabled ? 'bg-[rgb(6,207,249)]' : 'bg-gray-300'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-full aspect-[1/1] transform rounded-full bg-white transition-transform ${
-                            isEnabled ? 'translate-x-6' : 'translate-x-1'
-                          }`}
-                      />
-                    </button>
+
 
 
             </div>
