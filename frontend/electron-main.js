@@ -114,18 +114,51 @@ ipcMain.handle('export-programs', async () => {
     return { success: false, message: 'Python executable not found' };
   }
 
-  const exportProcess = spawn(pythonPath, [scriptPath], {
-    cwd: backendPath,
-    env: {
-      ...process.env,
-      PYTHONUNBUFFERED: '1',
-      PYTHONIOENCODING: 'utf-8',
-      PYTHONPATH: backendPath
+  return new Promise((resolve) => {
+      const exportProcess = spawn(pythonPath, [scriptPath], {
+        cwd: backendPath,
+        env: {
+          ...process.env,
+          PYTHONUNBUFFERED: '1',
+          PYTHONIOENCODING: 'utf-8',
+          PYTHONPATH: backendPath
+        }
+      })
+
+      exportProcess.on('close', (code) => {
+          if (code === 0) {
+            console.log('Programs exported successfully');
+            resolve({ success: true });
+          } else {
+            console.error(`Programs export failed with code ${code}`);
+            resolve({ success: false, code });
+          }
+      });
+
+      exportProcess.on('error', (err) => {
+          console.error('Failed to start programs export process:', err);
+          resolve({ success: false, error: err.message });
+      });
+  });
+
+})
+
+ipcMain.handle('read-programs', async () => {
+  try {
+    const programsPath = getResourcePath(path.join('backend', 'config', 'installed_programs.json'))
+
+
+    if (fs.existsSync(programsPath)) {
+      const data = fs.readFileSync(programsPath, 'utf8')
+      return JSON.parse(data)
+    } else {
+      console.error('Instlled programs file not found')
+      return null
     }
-  })
-
-  console.log('Installed programs exported successfully')
-
+  } catch (error) {
+    console.error('Error reading programs:', error)
+    return null
+  }
 })
 
 

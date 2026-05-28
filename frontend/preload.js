@@ -19,6 +19,10 @@ const electronAPI = {
     console.log('exportPrograms called')
     return ipcRenderer.invoke('export-programs')
   },
+  readPrograms: () => {
+    console.log('readPrograms called')
+    return ipcRenderer.invoke('read-programs')
+  },
   readSettings: () => {
     console.log('readSettings called')
     return ipcRenderer.invoke('read-settings')

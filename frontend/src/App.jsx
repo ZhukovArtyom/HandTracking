@@ -45,6 +45,7 @@ function App() {
   const [currentFrame, setCurrentFrame] = useState(null)
 
   const [gestures, setGestures] = useState([])
+  const [installedPrograms, setInstalledPrograms] = useState([])
 
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [gestureToDelete, setGestureToDelete] = useState(null)
@@ -501,26 +502,30 @@ function App() {
   }, [])
 
 
-  // Поиск установленных программ при запуске
+  // Загрузка списка установленных программ при запуске
   useEffect(() => {
-    const exportPrograms = async () => {
+    const loadPrograms = async () => {
       try {
         if (window.electronAPI && window.electronAPI.exportPrograms) {
-          await window.electronAPI.exportPrograms()
-          console.log('Programs exported')
-        }
-        else {
-          console.log('Error while exporting programs')
+            const exportResult = await window.electronAPI.exportPrograms()
+            console.log('Export result:', exportResult)
+
+            if (exportResult && exportResult.success) {
+              // После успешного экспорта читаем файл
+              const programsData = await window.electronAPI.readPrograms()
+              if (programsData) {
+                setInstalledPrograms(programsData)
+                console.log('Installed programs loaded:', programsData.length)
+              }
+            }
         }
       } catch (error) {
         console.error('Error while exporting programs')
       }
     }
 
-    exportPrograms()
+    loadPrograms()
   }, [])
-
-
 
 
   // Подписка на изменения настроек извне
@@ -980,6 +985,7 @@ function App() {
         {showAddGestureForm ? (
             <ActionLib
                 onSelectAction={handleSelectAction}
+                installedProgramsList={installedPrograms}
             />
           ) : (
 

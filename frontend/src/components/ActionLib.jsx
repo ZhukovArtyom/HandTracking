@@ -6,10 +6,9 @@ import exe_img from '../assets/exe_icon.png';
 import system_com_img from '../assets/system_com_icon.png';
 
 import keyboardCommandsData from '../../../backend/config/keyboard_commands.json';
-import installedProgramsData from '../../../backend/config/installed_programs.json';
 import systemCommandsData from '../../../backend/config/system_commands.json';
 
-function ActionLib({ onSelectAction }) {
+function ActionLib({ onSelectAction, installedProgramsList }) {
   const [keyboardCommands, setKeyboardCommands] = useState([]);
   const [installedPrograms, setInstalledPrograms] = useState([]);
   const [systemCommands, setSystemCommands] = useState([]);
@@ -20,7 +19,7 @@ function ActionLib({ onSelectAction }) {
   // Загрузка данных
   useEffect(() => {
     loadData();
-  }, []);
+  }, [installedProgramsList]);
 
   const loadData = async () => {
     setLoading(true);
@@ -28,7 +27,7 @@ function ActionLib({ onSelectAction }) {
       // Загружаем клавиши
       setKeyboardCommands(keyboardCommandsData);
       // Загружаем программы
-      setInstalledPrograms(installedProgramsData);
+      setInstalledPrograms(installedProgramsList);
 
       setSystemCommands(systemCommandsData);
 
@@ -133,7 +132,7 @@ function ActionLib({ onSelectAction }) {
               ))
             ) : (
               <div className="text-center text-gray-500">
-                {searchTerm ? 'Ничего не найдено' : '...'}
+                {searchTerm ? 'Ничего не найдено' : 'Идёт загрузка списка...\nПри первом запуске процесс может занять до 20 сек.'}
               </div>
             )}
           </div>
