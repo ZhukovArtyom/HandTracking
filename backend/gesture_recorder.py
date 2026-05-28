@@ -278,6 +278,10 @@ class GestureRecorder:
                 bordered = np.full((h + 40, w + 40, 4), (0, 0, 0, 0), dtype=np.uint8)
                 bordered[20:20 + h, 20:20 + w] = cropped
 
+                # если основная рука левая, отзеркаливаем изображение для правильного отображения в интерфейсе
+                if CONTROL_HAND == 'left':
+                    bordered = cv2.flip(bordered, 1)
+
                 return bordered
 
             return None
@@ -327,7 +331,7 @@ class GestureRecorder:
         if not pairs:
             return []
 
-        # Преобразуем hand_type в нужный формат (main - правая, second - левая)
+        # Преобразуем hand_type в нужный формат
         def get_point_label(hand_type, index):
             if hand_type == CONTROL_HAND:
                 return f"main_{index}"

@@ -136,11 +136,13 @@ class AdvancedCursorController:
                 if event.src_path.endswith('settings.json'):
                     print("Detected settings.json change")
                     self.controller.reload_settings()
+                if event.src_path.endswith('gestures.json'):
+                    print("Detected gestures.json change")
+                    self.controller.reload_gestures()
 
         # Определяем путь к файлу настроек
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        settings_path = os.path.join(script_dir, 'config', 'settings.json')
-        config_dir = os.path.dirname(settings_path)
+        config_dir = os.path.join(script_dir, 'config')
 
         if os.path.exists(config_dir):
             self.config_observer = Observer()
@@ -148,6 +150,12 @@ class AdvancedCursorController:
             self.config_observer.schedule(event_handler, path=config_dir, recursive=False)
             self.config_observer.start()
             print(f"Watching for config changes in: {config_dir}")
+
+
+    def reload_gestures(self):
+        if hasattr(self, 'gesture_recognizer'):
+            self.gesture_recognizer.reload_gestures()
+            print("Gestures reloaded successfully")
 
     def reload_settings(self):
         """Перезагружает настройки и обновляет переменные в реальном времени"""
@@ -436,7 +444,7 @@ class AdvancedCursorController:
         print("Остановка программы...")
         self.running = False
 
-        # Останавливаем watcher
+        # Останавливаем watcher-ы
         if hasattr(self, 'config_observer'):
             self.config_observer.stop()
             self.config_observer.join()

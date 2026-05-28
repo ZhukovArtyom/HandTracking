@@ -259,10 +259,6 @@ function App() {
     }
   }
 
-  const handleGestureEdit = (gesture) => {
-    console.log('Edit gesture:', gesture)
-    // Здесь будет открытие модального окна редактирования
-  }
 
   const handleGestureDelete = (id) => {
       setGestureToDelete(id)
@@ -831,6 +827,7 @@ function App() {
               onRecordGesture={RecordGesture}
               selectedAction={selectedGestureAction}
               gestureName={newGestureName}
+              controlHand={controlHand}
               gestureIcon={gestureIcon}
               onGestureNameChange={setNewGestureName}
               pythonStatus={pythonStatus}
@@ -1012,8 +1009,8 @@ function App() {
                               key={gesture.id}
                               gesture={gesture}
                               onToggle={handleGestureToggle}
-                              onEdit={handleGestureEdit}
                               onDelete={() => handleGestureDelete(gesture.id)}
+                              controlHand={controlHand}
                             />
                         ))}
                 </div>

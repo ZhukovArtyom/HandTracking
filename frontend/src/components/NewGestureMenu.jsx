@@ -5,7 +5,7 @@ import plus_img from '../assets/plus_icon.png'
 import hand_blue_bg_img from '../assets/hand_blue_bg.png'
 import no_img_img from '../assets/no_img_icon.png'
 
-function NewGestureMenu({onCancel, onSave, onRecordGesture, selectedAction, gestureName, gestureIcon, onGestureNameChange, pythonStatus}) {
+function NewGestureMenu({onCancel, onSave, onRecordGesture, selectedAction, gestureName, controlHand, gestureIcon, onGestureNameChange, pythonStatus}) {
 
 
   return (
@@ -25,10 +25,14 @@ function NewGestureMenu({onCancel, onSave, onRecordGesture, selectedAction, gest
                       <div class="h-3/10 flex items-center pb-[1.5vmax]">
                             <img id="gesture_icon"
                                 src={gestureIcon ? gestureIcon : no_img_img}
-                                style={{
-
+                                style = {controlHand == 'right' ? (
+                                  {
                                     objectFit: 'contain'
-                                  }}
+                                  }) : (
+                                  {
+                                      objectFit: 'contain',
+                                      transform: 'scaleX(-1)'
+                                  })}
                                 class="h-full aspect-[1/1] bg-[rgb(6,207,249)] border-1
                                 border-[rgb(6,207,249)] rounded-full"
                             />

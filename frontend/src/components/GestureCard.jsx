@@ -3,7 +3,7 @@ import React, { useState, useEffect} from 'react'
 import settings_img from '../assets/settings_icon.png'
 import delete_img from '../assets/delete_icon.png'
 
-function GestureCard({ gesture, onToggle, onEdit, onDelete }) {
+function GestureCard({ gesture, onToggle, onEdit, onDelete, controlHand }) {
   const [isEnabled, setIsEnabled] = useState(gesture.enabled === true)
 
   const [iconSrc, setIconSrc] = useState(null)
@@ -43,9 +43,15 @@ function GestureCard({ gesture, onToggle, onEdit, onDelete }) {
                     {iconSrc ? (
                         <img
                           src={iconSrc}
-                          style={{
-                            objectFit: 'contain'
-                          }}
+                          style = {controlHand == 'right' ? (
+                              {
+                                objectFit: 'contain'
+                              }) : (
+                              {
+                                  objectFit: 'contain',
+                                  transform: 'scaleX(-1)'
+                              })}
+
                           className="w-full h-full bg-[rgb(6,207,249)]"
                           alt={gesture.name}
                         />

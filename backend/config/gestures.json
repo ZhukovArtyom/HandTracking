@@ -1,10 +1,30 @@
 {
   "gestures": [
     {
-      "id": "1779456383699",
-      "name": "Большой + указательный",
+      "id": "1779984599195",
+      "name": "Жест \"рамка\"",
+      "action_name": "print screen",
+      "image": "gestures_icons/gesture_1779984599193.png",
+      "enabled": true,
+      "points_groups": [
+        [
+          "main_4",
+          "second_8"
+        ],
+        [
+          "main_8",
+          "second_4"
+        ]
+      ],
+      "type": "keyboard",
+      "on_press": "print screen",
+      "on_release": "print screen"
+    },
+    {
+      "id": "1779984424012",
+      "name": "Большой + указателный",
       "action_name": "Клик ЛКМ",
-      "image": "gestures_icons/gesture_1779456383693.png",
+      "image": "gestures_icons/gesture_1779984424010.png",
       "enabled": true,
       "points_groups": [
         [
@@ -17,10 +37,10 @@
       "on_release": "left_click_release"
     },
     {
-      "id": "1779456398238",
+      "id": "1779984457056",
       "name": "Большой + средний",
       "action_name": "Клик ПКМ",
-      "image": "gestures_icons/gesture_1779456398237.png",
+      "image": "gestures_icons/gesture_1779984457054.png",
       "enabled": true,
       "points_groups": [
         [
@@ -33,10 +53,10 @@
       "on_release": "right_click_release"
     },
     {
-      "id": "1779456415409",
+      "id": "1779984473460",
       "name": "Большой + безымянный",
       "action_name": "Прокрутка вверх",
-      "image": "gestures_icons/gesture_1779456415407.png",
+      "image": "gestures_icons/gesture_1779984473459.png",
       "enabled": true,
       "points_groups": [
         [
@@ -49,10 +69,10 @@
       "on_release": ""
     },
     {
-      "id": "1779456430399",
+      "id": "1779984508916",
       "name": "Большой + мизинец",
       "action_name": "Прокрутка вниз",
-      "image": "gestures_icons/gesture_1779456430397.png",
+      "image": "gestures_icons/gesture_1779984508915.png",
       "enabled": true,
       "points_groups": [
         [
@@ -63,6 +83,38 @@
       "type": "system",
       "on_press": "wheel_down",
       "on_release": ""
+    },
+    {
+      "id": "1779984653798",
+      "name": "Большой + указательный (неосновной)",
+      "action_name": "ctrl",
+      "image": "gestures_icons/gesture_1779984653796.png",
+      "enabled": true,
+      "points_groups": [
+        [
+          "second_4",
+          "second_8"
+        ]
+      ],
+      "type": "keyboard",
+      "on_press": "ctrl",
+      "on_release": "ctrl"
+    },
+    {
+      "id": "1779984713207",
+      "name": "Большой + средний (неосновной)",
+      "action_name": "shift",
+      "image": "gestures_icons/gesture_1779984713205.png",
+      "enabled": true,
+      "points_groups": [
+        [
+          "second_12",
+          "second_4"
+        ]
+      ],
+      "type": "keyboard",
+      "on_press": "shift",
+      "on_release": "shift"
     }
   ]
 }

@@ -150,6 +150,7 @@ ipcMain.handle('read-programs', async () => {
 
     if (fs.existsSync(programsPath)) {
       const data = fs.readFileSync(programsPath, 'utf8')
+      console.log('Programs list created successfully');
       return JSON.parse(data)
     } else {
       console.error('Instlled programs file not found')
@@ -205,7 +206,7 @@ ipcMain.handle('start-python', async (event, scriptFile) => {
   // ЕДИНЫЙ ОБРАБОТЧИК stdout
   pythonProcess.stdout.on('data', (data) => {
     const output = data.toString('utf-8')
-    console.log('Python stdout:', output)
+
 
     // Проверяем, что это кадр (начинается с "FRAME:")
     if (output.startsWith('FRAME:')) {
