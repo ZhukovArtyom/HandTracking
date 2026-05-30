@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback} from 'react'
 import GestureCard from './components/GestureCard'
 import NewGestureMenu from './components/NewGestureMenu'
 import ActionLib from './components/ActionLib'
@@ -431,25 +431,6 @@ function App() {
     }
   }, [showAddGestureForm])
 
-  // Получение групп пересекающихся точек или предупреждений
-  useEffect(() => {
-    if (window.electronAPI?.onPointGroups) {
-      window.electronAPI.onPointGroups((pointsData) => {
-        setPointGroups(pointsData)
-      })
-    }
-  }, [])
-
-  // Получение иконки жеста
-  useEffect(() => {
-    if (window.electronAPI?.onIcon) {
-      window.electronAPI.onIcon((iconData) => {
-
-        setGestureIcon(`data:image/png;base64,${iconData}`)
-      })
-    }
-  }, [])
-
 
   // Загрузка жестов при запуске
   useEffect(() => {
@@ -522,6 +503,59 @@ function App() {
 
     loadPrograms()
   }, [])
+
+  // Проверка на попытку записать существующий жест
+
+  const checkGestureExists = useCallback((newGroups) => {
+    // Нормализуем группы (сортируем точки внутри каждой группы и сами группы)
+    const normalizeGroups = (groups) => {
+      return [...groups]
+        .map(group => [...group].sort())  // сортируем точки в группе
+        .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))); // сортируем группы
+    };
+
+    const normalizedNew = normalizeGroups(newGroups);
+
+    return gestures.some(gesture => {
+      const normalizedExisting = normalizeGroups(gesture.points_groups);
+      return JSON.stringify(normalizedExisting) === JSON.stringify(normalizedNew);
+    });
+  }, [gestures]);
+
+  // Получение групп пересекающихся точек или предупреждений
+  useEffect(() => {
+    if (window.electronAPI?.onPointGroups) {
+      window.electronAPI.onPointGroups((pointsData) => {
+        if (typeof pointsData[0] !== 'string') {
+            if (checkGestureExists(pointsData)) {
+                setPointGroups(['ДАННЫЙ ЖЕСТ УЖЕ СУЩЕСТВУЕТ ⬊']);
+            } else {
+
+                setPointGroups(pointsData);
+            }
+        }
+        else
+        {
+            setPointGroups(pointsData)
+        }
+
+      })
+    }
+  }, [checkGestureExists])
+
+
+
+  // Получение иконки жеста
+  useEffect(() => {
+    if (window.electronAPI?.onIcon) {
+      window.electronAPI.onIcon((iconData) => {
+        setGestureIcon(`data:image/png;base64,${iconData}`)
+      })
+    }
+  }, [])
+
+
+
 
 
   // Подписка на изменения настроек извне
@@ -754,9 +788,11 @@ function App() {
 
                         <div className="flex justify-end">
 
-                            <div className={`bg-white/70 h-full rounded-xl px-3 py-1 flex items-center text-[1.5vmax] font-bold ${
+                            <div className={`bg-white/70 h-full rounded-xl px-3 py-1 flex items-center text-right text-[1.5vmax] font-bold ${
                                 typeof pointGroups[0] === 'string' ? 'text-red-500' : 'text-green-600'
-                            }`}>
+                                }`}
+                                style={{ whiteSpace: 'pre-line' }}
+                            >
 
                                 <img src={ typeof pointGroups[0] === 'string' ? warning_img : success_img} className="h-full mr-[0.5vmax]"/>
                                 { typeof pointGroups[0] === 'string' ? pointGroups[0] : 'ЖЕСТ ЗАПИСАН'}

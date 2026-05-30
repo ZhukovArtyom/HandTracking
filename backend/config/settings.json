@@ -12,7 +12,7 @@
     "sensitivity_zone_Y": 73,
     "padding": 30,
     "smoothing_level": 0.6,
-    "control_hand": "right"
+    "control_hand": "left"
   },
   "gestures": {
     "click_distance_threshold": 0.045,
