@@ -41,6 +41,7 @@ class GestureRecognizer:
         self.gestures = []
         self.active_gestures = {}  # {gesture_id: {'start_time': timestamp, 'hold_activated': False}}
         self.pending_gestures = {}  # {gesture_id: {'timer': timer_object, 'gesture': gesture, 'first_detected': timestamp}}
+        self.program_executed = set()  # {gesture_id: bool} - для отслеживания уже открытых программ
 
 
         self.global_blocked = False  # Глобальная блокировка для двуручных жестов
@@ -376,14 +377,17 @@ class GestureRecognizer:
 
         elif gesture_type == "program":
             if not on_release:
-                path = gesture['on_press']
-                if path.startswith('C:'):
-                    os.startfile(path)
-                else:
-                    subprocess.run(f'explorer.exe shell:AppsFolder\\{path}', shell=True)
+                if gesture['id'] not in self.program_executed:
+                    path = gesture['on_press']
+                    if path.startswith('C:'):
+                        os.startfile(path)
+                    else:
+                        subprocess.run(f'explorer.exe shell:AppsFolder\\{path}', shell=True)
 
-
+                    self.program_executed.add(gesture['id'])
             else:
+                if gesture['id'] in self.program_executed:
+                    self.program_executed.discard(gesture['id'])
                 return
 
         elif gesture_type == "naruto":

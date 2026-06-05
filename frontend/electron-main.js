@@ -47,7 +47,7 @@ function createWindow() {
     mainWindow.loadFile(indexPath)
   }
 
-//  mainWindow.setMenu(null)
+  mainWindow.setMenu(null)
 }
 
 function getSettingsPath() {

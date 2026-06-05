@@ -11,11 +11,11 @@
     "sensitivity_zone_X": 100,
     "sensitivity_zone_Y": 73,
     "padding": 30,
-    "smoothing_level": 0.6,
-    "control_hand": "left"
+    "smoothing_level": 0,
+    "control_hand": "right"
   },
   "gestures": {
-    "click_distance_threshold": 0.045,
+    "click_distance_threshold": 0.04,
     "activation_delay": 0
   }
 }
