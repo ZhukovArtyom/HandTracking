@@ -16,7 +16,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
 
-# Для собранного приложения добавляем resources/backend
+# Для собранного приложения
 if getattr(sys, 'frozen', False):
     resources_dir = os.path.join(os.path.dirname(sys.executable), 'resources', 'backend')
     if resources_dir not in sys.path:
@@ -24,7 +24,7 @@ if getattr(sys, 'frozen', False):
 
 from config_loader import config
 
-# --- ОСНОВНЫЕ НАСТРОЙКИ ---
+# Основные настройки
 CAMERA_WIDTH = config.get('camera.width')
 CAMERA_HEIGHT = config.get('camera.height')
 MODEL_PATH = config.get('model.path')
@@ -63,11 +63,11 @@ class GestureRecorder:
 
         # Проверка камеры
         if not self.cap.isOpened():
-            print("✗ Ошибка: Не удалось открыть камеру")
+            print("Ошибка: Не удалось открыть камеру")
             self.running = False
             return
 
-        print("✓ Камера успешно запущена")
+        print("Камера успешно запущена")
 
         self.running = True
 
@@ -75,7 +75,7 @@ class GestureRecorder:
         self.current_frame = None
 
     def capture_thread(self):
-        """Поток захвата видео"""
+        # Поток захвата видео
         print("Запуск потока захвата...")
         while self.running:
             success, frame = self.cap.read()
@@ -88,14 +88,14 @@ class GestureRecorder:
                 _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
                 frame_base64 = base64.b64encode(buffer).decode('utf-8')
 
-                # Отправляем в Electron через stdout (с префиксом FRAME:)
+                # Отправляем в Electron через stdout
                 print(f"FRAME:{frame_base64}")
             time.sleep(0.001)
 
 
 
     def gesture_recording_thread(self):
-        """Поток для прослушивания команд из stdin"""
+        # Поток для прослушивания команд из stdin
         print("Запуск потока прослушивания команд...")
         while self.running:
             try:
@@ -151,7 +151,7 @@ class GestureRecorder:
 
                             # Если нет групп с точками из обеих рук - жест некорректный
                             if not (has_main and has_second):
-                                print(f"POINT_GROUPS:[\"НЕКОРРЕКТНЫЙ ДВУРУЧНЫЙ ЖЕСТ\"]")
+                                print(f"POINT_GROUPS:[\"НЕКОРРЕКТНЫЙ ДВУРУЧНЫЙ ЖЕСТ (Руки разделены)\"]")
                                 continue
 
                         if intersecting_groups:
@@ -170,7 +170,7 @@ class GestureRecorder:
                                         cross_hand = True
                                         break
                                 if not cross_hand:
-                                    print(f"POINT_GROUPS:[\"НЕКОРРЕКТНЫЙ ДВУРУЧНЫЙ ЖЕСТ\"]")
+                                    print(f"POINT_GROUPS:[\"НЕКОРРЕКТНЫЙ ДВУРУЧНЫЙ ЖЕСТ (Руки разделены)\"]")
                                     can_send = False
 
                             if can_send:
@@ -195,7 +195,7 @@ class GestureRecorder:
             height, width = frame.shape[:2]
             base = np.full((height, width, 4), (0, 0, 0, 0), dtype=np.uint8)  # прозрачное базовое пространство
 
-            # Собираем все точки для bounding box
+            # Собираем все точки
             all_points = []
 
             # Рисуем скелеты рук на синем фоне
@@ -229,7 +229,7 @@ class GestureRecorder:
                                         [int(landmarks[17].x * width), int(landmarks[17].y * height)]
                                         ], dtype=np.int32)
 
-                # Рисуем ладонь (СНАЧАЛА)
+                # Рисуем ладонь
                 cv2.polylines(base, [palm_points], True, (230, 230, 230, 255), 5)
                 cv2.fillPoly(base, [palm_points], (255, 255, 255, 255))
 
@@ -261,7 +261,7 @@ class GestureRecorder:
                         all_points.append((x1, y1))
                         all_points.append((x2, y2))
 
-            # Обрезаем до содержимого (находим bounding box всех точек)
+            # Обрезаем до содержимого
             if all_points:
                 # Находим границы
                 points_array = np.array(all_points)
@@ -273,7 +273,7 @@ class GestureRecorder:
                 # Обрезаем изображение
                 cropped = base[min_y:max_y, min_x:max_x]
 
-                # Добавляем поля (отступ)
+                # Добавляем поля
                 h, w = cropped.shape[:2]
                 bordered = np.full((h + 40, w + 40, 4), (0, 0, 0, 0), dtype=np.uint8)
                 bordered[20:20 + h, 20:20 + w] = cropped
@@ -294,20 +294,16 @@ class GestureRecorder:
 
 
     def calculate_distance(self, point1, point2):
-        """Вычисляет расстояние между двумя точками в нормализованных координатах"""
+        # Вычисляет расстояние между двумя точками
         return np.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2)
 
     def find_intersecting_point_groups(self, landmarks_dict):
-        """
-        Находит группы точек, которые пересекаются (находятся ближе порога)
-        Использует только ключевые точки: 4,8,12,16,20,1,5,9,13,17
-        Возвращает список попарных групп точек в формате [["main_4", "main_8"], ["main_8", "main_12"], ...]
-        """
+        # Поиск пересеающихся точек
         # Ключевые точки, которые участвуют в распознавании
         KEY_POINTS = {4, 8, 12, 16, 20, 1}
 
         # Собираем только ключевые точки из всех рук
-        all_points = []  # (hand_type, index, point_obj)
+        all_points = []
 
         for hand_type, landmarks in landmarks_dict.items():
             if landmarks is not None:
@@ -348,10 +344,10 @@ class GestureRecorder:
             point2_label = get_point_label(hand2, idx2)
             groups.append([point1_label, point2_label])
 
-        # Удаляем дубликаты (порядок точек не важен)
+        # Удаляем дубликаты
         unique_groups = []
         for group in groups:
-            # Сортируем для нормализации
+            # Сортируем
             sorted_group = sorted(group)
             if sorted_group not in unique_groups:
                 unique_groups.append(sorted_group)
@@ -359,7 +355,7 @@ class GestureRecorder:
         return unique_groups
 
     def run(self):
-        """Главный цикл программы"""
+
         if not self.running:
             print("✗ Не удалось запустить визуализатор")
             return
@@ -378,7 +374,7 @@ class GestureRecorder:
         self.stop()
 
     def stop(self):
-        """Остановка и освобождение ресурсов"""
+        # Остановка и освобождение ресурсов
         self.running = False
         if hasattr(self, 'landmarker') and self.landmarker:
             self.landmarker.close()

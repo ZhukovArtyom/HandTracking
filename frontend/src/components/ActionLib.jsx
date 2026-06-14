@@ -57,12 +57,12 @@ function ActionLib({ onSelectAction, installedProgramsList }) {
     command.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Фильтрация программ по поиску
+
   const filteredPrograms = installedPrograms.filter(program =>
     program.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Фильтрация команд по поиску
+
   const filteredSystemCommands = systemCommands.filter(command =>
     command.name.toLowerCase().includes(searchTerm.toLowerCase())
   );

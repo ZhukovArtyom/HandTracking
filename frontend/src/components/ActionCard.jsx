@@ -1,4 +1,4 @@
-// ActionCard.jsx
+// Карточка действия
 import React from 'react';
 
 function ActionCard({ command, icon, onClick }) {

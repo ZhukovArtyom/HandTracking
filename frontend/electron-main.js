@@ -203,7 +203,7 @@ ipcMain.handle('start-python', async (event, scriptFile) => {
     }
   })
 
-  // ЕДИНЫЙ ОБРАБОТЧИК stdout
+  // Обработчик stdout
   pythonProcess.stdout.on('data', (data) => {
     const output = data.toString('utf-8')
 
@@ -213,10 +213,10 @@ ipcMain.handle('start-python', async (event, scriptFile) => {
       const frameData = output.substring(6)
       mainWindow?.webContents.send('frame', frameData)
     }
-    else if (output.startsWith('FPS:')) {
-        const fpsValue = parseInt(output.substring(4))
-        mainWindow?.webContents.send('python-fps', fpsValue)
-    }
+//    else if (output.startsWith('FPS:')) {
+//        const fpsValue = parseInt(output.substring(4))
+//        mainWindow?.webContents.send('python-fps', fpsValue)
+//    }
     else if (output.startsWith('POINT_GROUPS:')) {
         const str_data = output.substring(13)
         try {

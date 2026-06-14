@@ -63,9 +63,9 @@ const electronAPI = {
   onPythonStatus: (callback) => {
     ipcRenderer.on('python-status', (event, status) => callback(status))
   },
-  onFps: (callback) => {
-    ipcRenderer.on('python-fps', (event, fps) => callback(fps))
-  },
+//  onFps: (callback) => {
+//    ipcRenderer.on('python-fps', (event, fps) => callback(fps))
+//  },
   recordGesture: () => {
     ipcRenderer.invoke('record-gesture')
   }

@@ -12,7 +12,7 @@ import sys
 # Для управления курсором
 import ctypes
 
-import json
+
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
@@ -26,7 +26,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
 
-# Для собранного приложения добавляем resources/backend
+# Для собранного приложения
 if getattr(sys, 'frozen', False):
     resources_dir = os.path.join(os.path.dirname(sys.executable), 'resources', 'backend')
     if resources_dir not in sys.path:
@@ -35,7 +35,7 @@ if getattr(sys, 'frozen', False):
 from config_loader import config
 from gesture_recognizer import GestureRecognizer
 
-# --- ОСНОВНЫЕ НАСТРОЙКИ ---
+# Основные настройки
 CAMERA_WIDTH = config.get('camera.width')
 CAMERA_HEIGHT = config.get('camera.height')
 MODEL_PATH = config.get('model.path')
@@ -43,21 +43,15 @@ MODEL_PATH = config.get('model.path')
 SENSITIVITY_ZONE_PERCENT = config.get('cursor.sensitivity_zone_percent')
 SENSITIVITY_ZONE_X = config.get('cursor.sensitivity_zone_X')
 SENSITIVITY_ZONE_Y = config.get('cursor.sensitivity_zone_Y')
-
-PADDING = config.get('cursor.padding')
-
+SMOOTHING_LEVEL = config.get('cursor.smoothing_level')
+CONTROL_HAND = config.get('cursor.control_hand')
 CLICK_DISTANCE_THRESHOLD = config.get('gestures.click_distance_threshold')
 ACTIVATION_DELAY = config.get('gestures.activation_delay')
 
-# --- НАСТРОЙКИ СГЛАЖИВАНИЯ КУРСОРА ---
-SMOOTHING_LEVEL = config.get('cursor.smoothing_level')
+PADDING = config.get('cursor.padding')
 
-# --- НАСТРОЙКИ ПРОИЗВОДИТЕЛЬНОСТИ ---
+# Приоритет процесса высокий
 PROCESS_PRIORITY_HIGH = True
-
-# --- НАСТРОЙКИ УПРАВЛЕНИЯ РУКАМИ ---
-
-CONTROL_HAND = config.get('cursor.control_hand')  # 'left', 'right', 'auto'
 
 class AdvancedCursorController:
     def __init__(self):
@@ -90,10 +84,10 @@ class AdvancedCursorController:
         print("Инициализация модели MediaPipe...")
         try:
             base_options = python.BaseOptions(model_asset_path=MODEL_PATH)
-            # Изменяем num_hands на 2 для обнаружения обеих рук
+            # Настройки модели
             options = vision.HandLandmarkerOptions(
                 base_options=base_options,
-                num_hands=2,  # <-- Важно: отслеживаем до 2 рук
+                num_hands=2,
                 min_hand_detection_confidence=0.55,
                 min_tracking_confidence=0.45
             )
@@ -108,7 +102,7 @@ class AdvancedCursorController:
         print(f"Разрешение экрана: {self.screen_width}x{self.screen_height}")
 
         self.cap = cv2.VideoCapture(0)
-        # Проверить все возможные индексы камер
+
 
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, CAMERA_WIDTH)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT)
@@ -120,13 +114,13 @@ class AdvancedCursorController:
         self.gesture_recognizer = GestureRecognizer()
 
         # Переменная для хранения ID выбранной руки для управления курсором
-        self.active_hand = None  # 'left' или 'right'
+        self.active_hand = None
         self.active_hand_detected = False
         self.last_active_hand_update = time.time()
         self.setup_config_watcher()
 
     def setup_config_watcher(self):
-        """Настраивает отслеживание изменений настроек"""
+
 
         class SettingsHandler(FileSystemEventHandler):
             def __init__(self, controller):
@@ -158,7 +152,7 @@ class AdvancedCursorController:
             print("Gestures reloaded successfully")
 
     def reload_settings(self):
-        """Перезагружает настройки и обновляет переменные в реальном времени"""
+
         global SENSITIVITY_ZONE_PERCENT, SENSITIVITY_ZONE_X, SENSITIVITY_ZONE_Y
         global PADDING, CLICK_DISTANCE_THRESHOLD, SMOOTHING_LEVEL, CONTROL_HAND, ACTIVATION_DELAY
 
@@ -166,27 +160,22 @@ class AdvancedCursorController:
         config.reload()
 
         # Обновляем глобальные переменные
-        with self.lock:  # Используйте существующий lock или создайте новый
+        with self.lock:
             SENSITIVITY_ZONE_PERCENT = config.get('cursor.sensitivity_zone_percent', SENSITIVITY_ZONE_PERCENT)
             SENSITIVITY_ZONE_X = config.get('cursor.sensitivity_zone_X', SENSITIVITY_ZONE_X)
             SENSITIVITY_ZONE_Y = config.get('cursor.sensitivity_zone_Y', SENSITIVITY_ZONE_Y)
             PADDING = config.get('cursor.padding', PADDING)
 
-            # Обновляем порог клика
 
             CLICK_DISTANCE_THRESHOLD = config.get('gestures.click_distance_threshold')
 
-            # Обновляем сглаживание
             SMOOTHING_LEVEL = config.get('cursor.smoothing_level', SMOOTHING_LEVEL)
             self.smoothing_speed = max(0.01, 1.0 - SMOOTHING_LEVEL)
 
-            # Обновляем контрольную руку
             CONTROL_HAND = config.get('cursor.control_hand', CONTROL_HAND)
 
-            # Обновляем задержку активации жестов
             ACTIVATION_DELAY = config.get('gestures.activation_delay', ACTIVATION_DELAY)
 
-            # Обновляем gesture_recognizer
             if hasattr(self, 'gesture_recognizer'):
                 self.gesture_recognizer.update_control_hand(CONTROL_HAND)
                 self.gesture_recognizer.update_activation_delay(ACTIVATION_DELAY)
@@ -197,7 +186,7 @@ class AdvancedCursorController:
               f"activation_delay={ACTIVATION_DELAY}s")
 
     def capture_thread(self):
-        """Поток захвата видео"""
+
         print("Запуск потока захвата...")
         while self.running:
             success, frame = self.cap.read()
@@ -208,7 +197,7 @@ class AdvancedCursorController:
             time.sleep(0.001)
 
     def tracking_thread(self):
-        """Поток отслеживания рук (обеих)"""
+
         print("Запуск потока отслеживания...")
 
         while self.running:
@@ -219,7 +208,7 @@ class AdvancedCursorController:
                     actual_height, actual_width = frame_to_process.shape[:2]
 
             if frame_to_process is not None:
-                # === БЕРЁМ АКТУАЛЬНЫЕ ЗНАЧЕНИЯ НАСТРОЕК ===
+                # Актуальные конфигурации
                 current_zone_percent = SENSITIVITY_ZONE_PERCENT
                 current_zone_x = SENSITIVITY_ZONE_X
                 current_zone_y = SENSITIVITY_ZONE_Y
@@ -295,7 +284,7 @@ class AdvancedCursorController:
                 with self.data_lock:
                     self.hand_data = new_hand_data
 
-                # --- Логика выбора активной руки ---
+                # Выбираем ведущую руку
                 if CONTROL_HAND == 'left':
                     if self.hand_data['left']['landmarks'] is not None:
                         if not self.active_hand_detected or self.active_hand != 'left':
@@ -311,7 +300,7 @@ class AdvancedCursorController:
                     elif self.active_hand == 'right':
                         self.active_hand_detected = False
 
-                # --- Управление курсором ---
+                # Перемещение курсора
                 if self.active_hand_detected and self.active_hand is not None:
                     hand_info = self.hand_data.get(self.active_hand, {})
                     target_pos = hand_info.get('target_pos')
@@ -325,7 +314,7 @@ class AdvancedCursorController:
                 time.sleep(0.001)
 
     def apply_smoothing(self, target_x, target_y):
-        """Применяет сглаживание к координатам курсора"""
+
         if self.smoothed_x is None or self.smoothed_y is None:
             self.smoothed_x = target_x
             self.smoothed_y = target_y
@@ -335,19 +324,19 @@ class AdvancedCursorController:
         return (self.smoothed_x, self.smoothed_y)
 
     def gesture_thread(self):
-        """Поток распознавания жестов - получает точки ОБЕИХ рук"""
+
         while self.running:
             # Собираем точки обеих рук в словарь
             landmarks_dict = {'left': None, 'right': None}
             target_pos = None
 
             with self.data_lock:
-                # Берем точки левой руки (если есть)
+                # Берем точки левой руки
                 if self.hand_data['left']['landmarks'] is not None:
                     landmarks_dict['left'] = self.hand_data['left']['landmarks']
 
 
-                # Берем точки правой руки (если есть)
+                # Берем точки правой руки
                 if self.hand_data['right']['landmarks'] is not None:
                     landmarks_dict['right'] = self.hand_data['right']['landmarks']
 
@@ -358,7 +347,7 @@ class AdvancedCursorController:
             time.sleep(0.01)
 
     def display_thread(self):
-        """Поток отправки кадров в интерфейс (без создания окна)"""
+
         print("Запуск потока отправки кадров...")
 
         while self.running:
@@ -384,10 +373,10 @@ class AdvancedCursorController:
                             overlay = cv2.imread('Razengan.png')
                             h_overlay, w_overlay = overlay.shape[:2]
 
-                            # Предполагаем, что right_center = (x, y), где x - ширина, y - высота
-                            x, y = right_center  # x - координата по горизонтали, y - по вертикали
 
-                            # Вычисляем левый верхний угол для вставки (правый нижний угол картинки совпадает с right_center)
+                            x, y = right_center
+
+                            # Вычисляем левый верхний угол для вставки
                             top_left_x = x - w_overlay
                             top_left_y = y - h_overlay
 
@@ -395,31 +384,31 @@ class AdvancedCursorController:
                             if (top_left_x >= 0 and top_left_y >= 0 and
                                     top_left_x + w_overlay <= frame.shape[1] and
                                     top_left_y + h_overlay <= frame.shape[0]):
-                                # Вставляем картинку: [y1:y2, x1:x2]
+                                # Вставляем картинку
                                 frame[top_left_y:y, top_left_x:x] = overlay
 
 
 
-                    self.frame_count += 1
-                    if time.time() - self.last_fps_time >= 1.0:
-                        self.fps = self.frame_count
-                        self.frame_count = 0
-                        self.last_fps_time = time.time()
-
-                        # Отправляем фпс в электрон
-                        print(f"FPS:{self.fps}")
+                    # self.frame_count += 1
+                    # if time.time() - self.last_fps_time >= 1.0:
+                    #     self.fps = self.frame_count
+                    #     self.frame_count = 0
+                    #     self.last_fps_time = time.time()
+                    #
+                    #     # Отправляем фпс в электрон
+                    #     print(f"FPS:{self.fps}")
 
                     # Кодируем кадр в JPEG, затем в base64
                     _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
                     frame_base64 = base64.b64encode(buffer).decode('utf-8')
 
-                    # Отправляем в Electron через stdout (с префиксом FRAME:)
+                    # Отправляем в Electron через stdout
                     print(f"FRAME:{frame_base64}")
 
             time.sleep(0.01)
 
     def set_frame_callback(self, callback):
-        """Устанавливает callback для отправки кадров в интерфейс"""
+        #Устанавливаем callback для отправки кадров в интерфейс
         self.send_frame_callback = callback
 
     def run(self):
@@ -449,7 +438,7 @@ class AdvancedCursorController:
             self.config_observer.stop()
             self.config_observer.join()
 
-        # Останавливаем простой перезагрузчик
+        # Останавливаем  перезагрузчик
         if hasattr(self, 'config_reloader'):
             self.config_reloader.stop()
 

@@ -4,7 +4,7 @@ import threading
 
 
 class Config:
-    """Класс для загрузки и доступа к настройкам с поддержкой горячей перезагрузки"""
+    # Сервис загрузки настроек
 
     def __init__(self, config_path='config/settings.json'):
         self.config_path = config_path
@@ -13,11 +13,11 @@ class Config:
         self.callbacks = []
         self.load_config()
 
-        # Запускаем watcher (если нужно)
+
         self.watcher = None
 
     def load_config(self):
-        """Загружает настройки из JSON файла"""
+
         try:
             # Определяем путь к файлу настроек
             script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -44,11 +44,11 @@ class Config:
             return False
 
     def reload(self):
-        """Принудительная перезагрузка настроек"""
+
         return self.load_config()
 
     def get(self, key, default=None):
-        """Получает значение по ключу с точкой (например, 'camera.width')"""
+        # Получает значение по ключу с точкой
         keys = key.split('.')
 
         with self.lock:
@@ -62,16 +62,16 @@ class Config:
             return default
 
     def get_all(self):
-        """Возвращает все настройки"""
+        # Возвращает все настройки
         with self.lock:
             return self.data.copy()
 
     def subscribe(self, callback):
-        """Подписывает функцию на изменения настроек"""
+        # Подписывает функцию на изменения настроек
         self.callbacks.append(callback)
 
     def unsubscribe(self, callback):
-        """Отписывает функцию"""
+        # Отписывает функцию
         if callback in self.callbacks:
             self.callbacks.remove(callback)
 

@@ -92,9 +92,8 @@ POPULAR_COMBINATIONS = [
 
 
 def export_keyboard_commands(json_output_file=None):
-    """
-    Экспортирует все возможные клавиши и сочетания клавиш в JSON файл
-    """
+    # Экспортирует все возможные клавиши и сочетания клавиш в JSON файл
+
     print("=" * 60)
     print("ЭКСПОРТ КЛАВИАРНЫХ КОМАНД В JSON")
     print("=" * 60)
@@ -106,14 +105,14 @@ def export_keyboard_commands(json_output_file=None):
     if json_output_file is None:
         json_output_file = "./config/keyboard_commands.json"
 
-    # Полный путь к файлу (в папке скрипта)
+    # Полный путь к файлу
     full_path = os.path.join(script_dir, json_output_file)
 
     print(f"Путь к папке скрипта: {script_dir}")
     print(f"Файл будет сохранен: {full_path}")
     print(f"Генерация списка клавиш...")
 
-    # ОБЪЕДИНЯЕМ ВСЕ СПИСКИ В ОДИН ПЛОСКИЙ СПИСОК
+
     all_commands = []
 
     # Добавляем все категории

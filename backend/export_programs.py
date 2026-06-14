@@ -5,14 +5,14 @@ import os
 
 
 def get_full_start_menu_with_paths():
-    """Получает ВСЕ элементы меню Пуск с правильной кодировкой и командами для запуска"""
+    # Получает программы, установленные на компьютер
 
     ps_command = '''
-    # Самый надежный способ собрать все элементы Пуска
+    
     $allApps = @()
     $allPaths = @()
 
-    # 1. Классические ярлыки
+    # Классические ярлыки
     $paths = @(
         "$env:APPDATA\\Microsoft\\Windows\\Start Menu\\Programs",
         "$env:PROGRAMDATA\\Microsoft\\Windows\\Start Menu\\Programs"
@@ -28,7 +28,7 @@ def get_full_start_menu_with_paths():
         }
     }
 
-    # 2. UWP приложения (современные) с поиском команды для запуска
+    # UWP приложения с поиском команды для запуска
     try {
         $uwpApps = Get-StartApps -ErrorAction SilentlyContinue
         foreach ($app in $uwpApps) {
@@ -41,7 +41,7 @@ def get_full_start_menu_with_paths():
         }
     } catch { }
 
-    # 3. Убираем дубликаты и сортируем
+    # Убираем дубликаты и сортируем
     $appMap = @{}
     for ($i=0; $i -lt $allApps.Count; $i++) {
         $name = $allApps[$i]
@@ -92,8 +92,8 @@ def get_full_start_menu_with_paths():
 
 
 def main():
-    print("🔍 Получение списка программ из меню Пуск...")
-    print("   (с командами для запуска, включая UWP приложения)\n")
+    print("Получение списка программ из меню Пуск...")
+
 
     programs_data = get_full_start_menu_with_paths()
 
@@ -107,10 +107,10 @@ def main():
         with open(full_path, "w", encoding="utf-8") as f:
             json.dump(output, f, ensure_ascii=False, indent=2)
 
-        print(f"✅ Сохранено в 'start_menu_programs_with_real_paths.json'")
+        print(f"Сохранено в 'start_menu_programs_with_real_paths.json'")
 
     else:
-        print("❌ Не удалось получить список программ")
+        print("Не удалось получить список программ")
 
 
 if __name__ == "__main__":

@@ -16,7 +16,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
 
-# Для собранного приложения добавляем resources/backend
+# Для собранного приложения
 if getattr(sys, 'frozen', False):
     resources_dir = os.path.join(os.path.dirname(sys.executable), 'resources', 'backend')
     if resources_dir not in sys.path:
@@ -39,9 +39,9 @@ class GestureRecognizer:
 
         self.gestures_file = gestures_file
         self.gestures = []
-        self.active_gestures = {}  # {gesture_id: {'start_time': timestamp, 'hold_activated': False}}
-        self.pending_gestures = {}  # {gesture_id: {'timer': timer_object, 'gesture': gesture, 'first_detected': timestamp}}
-        self.program_executed = set()  # {gesture_id: bool} - для отслеживания уже открытых программ
+        self.active_gestures = {}
+        self.pending_gestures = {}
+        self.program_executed = set()  # Для отслеживания уже открытых программ
 
 
         self.global_blocked = False  # Глобальная блокировка для двуручных жестов
@@ -52,7 +52,7 @@ class GestureRecognizer:
         self.hand_blocking_gesture = {'main': None, 'second': None}
 
 
-        self.last_execution_time = {}  # {gesture_id: last_execution_timestamp}
+        self.last_execution_time = {}
         self.lock = threading.Lock()
 
         # Загружаем жесты из файла
@@ -80,31 +80,31 @@ class GestureRecognizer:
             return 'second'
 
     def update_control_hand(self, new_control_hand):
-        """Обновляет контрольную руку для жестов"""
+        # Обновляет контрольную руку для жестов
         global CONTROL_HAND, SECOND_HAND
         CONTROL_HAND = new_control_hand
         SECOND_HAND = "left" if CONTROL_HAND == "right" else "right"
         print(f"Gesture recognizer: control hand updated to {CONTROL_HAND}")
 
     def update_activation_delay(self, new_delay):
-        """Обновляет задержку активации жестов"""
+        # Обновляет задержку активации жестов
         global ACTIVATION_DELAY
         ACTIVATION_DELAY = new_delay
         print(f"Activation delay updated to {ACTIVATION_DELAY}s")
 
     def update_click_threshold(self, new_threshold):
-        """Обновляет порог расстояния для клика"""
+        # Обновляет порог расстояния для клика
         global CLICK_DISTANCE_THRESHOLD
         CLICK_DISTANCE_THRESHOLD = new_threshold
         print(f"Click threshold updated to {CLICK_DISTANCE_THRESHOLD}")
 
     def load_gestures(self):
-        """Загружает жесты из JSON файла"""
+        # Загружает жесты из JSON файла
         try:
             with open(self.gestures_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 all_gestures = data.get('gestures', [])
-                # Фильтруем: оставляем только те, у которых enabled == "true"
+                # Фильтруем: оставляем только те, у которых enabled = true
                 self.gestures = [g for g in all_gestures if g.get('enabled') == True]
 
                 print(f"Загружено {len(self.gestures)} жестов:")
@@ -117,7 +117,7 @@ class GestureRecognizer:
             self.gestures = []
 
     def calculate_distance(self, point1, point2):
-        """Вычисляет расстояние между двумя точками"""
+        # Вычисляет расстояние между двумя точками
         return np.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2)
 
     def check_point_group(self, landmarks_dict, point_group):
@@ -166,7 +166,7 @@ class GestureRecognizer:
         return True
 
     def cancel_pending_gesture(self, gesture_id):
-        """Отменяет отложенный жест"""
+        # Отменяет отложенный жест
         if gesture_id in self.pending_gestures:
             pending = self.pending_gestures[gesture_id]
             if pending['timer'] is not None:
@@ -175,7 +175,7 @@ class GestureRecognizer:
             print(f"Жест отменен до активации")
 
     def can_execute_gesture(self, gesture):
-        """Проверяет, можно ли выполнить жест с учётом текущих блокировок"""
+        # Проверяет, можно ли выполнить жест с учётом текущих блокировок
         gesture_hand = self.get_gesture_hand_type(gesture)
 
         if self.global_blocked:
@@ -213,7 +213,7 @@ class GestureRecognizer:
 
 
     def execute_after_delay(self, gesture, current_time):
-        """Выполняет жест после задержки"""
+        # Выполняет жест после задержки
         gesture_id = gesture['id']
 
         # Проверяем, что жест все еще в ожидании и не был отменен
@@ -238,7 +238,7 @@ class GestureRecognizer:
             self.last_execution_time[gesture_id] = current_time
 
     def execute_action(self, gesture, current_time):
-        """Запускает таймер для отложенной активации жеста"""
+        # Запускает таймер для отложенной активации жеста
         gesture_id = gesture['id']
 
 
@@ -246,11 +246,11 @@ class GestureRecognizer:
         if gesture_id in self.active_gestures:
             return False
 
-        # Можем ли выполнить жест?
+        # Проверка можем ли выполнить жест
         if not self.can_execute_gesture(gesture):
             return False
 
-        # Если жест уже в очереди ожидания - просто возвращаемся, не обновляем таймер
+        # Если жест уже в очереди ожидания
         if gesture_id in self.pending_gestures:
             return True
 
@@ -272,7 +272,7 @@ class GestureRecognizer:
             for pending_id in list(self.pending_gestures.keys()):
                 self.cancel_pending_gesture(pending_id)
 
-        # Особый случай: задержка 0 секунд - активируем мгновенно
+        # Если жесты активируются без удержания
         if ACTIVATION_DELAY <= 0:
             print(f"Жест {gesture['name']} активирован мгновенно")
             self.active_gestures[gesture_id] = {
@@ -302,7 +302,7 @@ class GestureRecognizer:
         return True
 
     def on_gesture_release(self, gesture_id):
-        """Вызывается когда жест перестает распознаваться"""
+        # Вызывается когда жест перестает распознаваться
 
         # Если жест был в ожидании - отменяем таймер
         if gesture_id in self.pending_gestures:
@@ -470,7 +470,7 @@ class GestureRecognizer:
                     self.cancel_pending_gesture(gesture_id)
 
     def reload_gestures(self):
-        """Перезагружает жесты из файла"""
+        # Перезагружает жесты из файла
         self.load_gestures()
         with self.lock:
             for gesture_id in list(self.pending_gestures.keys()):

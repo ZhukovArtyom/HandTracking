@@ -40,7 +40,7 @@ function App() {
   const [smoothingLevel, setSmoothingLevel] = useState(50)
   const [gestureSensitivity, setGestureSensitivity] = useState(50)
   const [activationDelay, setActivationDelay] = useState(0)
-  const [controlHand, setControlHand] = useState('right') // Добавлен state для выбранной руки
+  const [controlHand, setControlHand] = useState('right')
 
   const [currentFrame, setCurrentFrame] = useState(null)
 
@@ -51,7 +51,7 @@ function App() {
   const [gestureToDelete, setGestureToDelete] = useState(null)
 
   const [pythonStatus, setPythonStatus] = useState('ОСТАНОВЛЕНО')
-  const [fps, setFps] = useState(0)
+//   const [fps, setFps] = useState(0)
 
   const [timerCount, setTimerCount] = useState(0)
   const [timerActive, setTimerActive] = useState(false)
@@ -119,7 +119,7 @@ function App() {
 
 
       if (pointGroups.length === 0 || typeof pointGroups[0] === 'string') {
-        // Вместо alert используем более мягкое уведомление
+
         const inputElement = document.getElementById('gesture_icon')
         if (inputElement) {
           inputElement.style.borderColor = 'red'
@@ -131,7 +131,7 @@ function App() {
       }
 
       if (!newGestureName.trim()) {
-        // Вместо alert используем более мягкое уведомление
+
         const inputElement = document.getElementById('gestureName')
         if (inputElement) {
           inputElement.style.borderColor = 'red'
@@ -311,7 +311,7 @@ function App() {
   }
 
   const getZoneStyles = () => {
-    // Размер зоны в процентах от родителя (trackingSize)
+    // Размер зоны в процентах от родителя
     const sizePercent = trackingSize
 
     // Ширина и высота зоны в процентах
@@ -624,13 +624,13 @@ function App() {
     }
   }, [])
 
-  useEffect(() => {
-    if (window.electronAPI?.onFps) {
-      window.electronAPI.onFps((fpsValue) => {
-        setFps(fpsValue)
-      })
-    }
-  }, [])
+//   useEffect(() => {
+//     if (window.electronAPI?.onFps) {
+//       window.electronAPI.onFps((fpsValue) => {
+//         setFps(fpsValue)
+//       })
+//     }
+//   }, [])
 
   const startPython = async (scriptFile) => {
     if (!apiReady) return
@@ -692,7 +692,7 @@ function App() {
 
             {!showAddGestureForm ? (
 
-               <div class="absolute inset-0 rounded-xl mb-5 pointer-events-none">
+               <div class="absolute inset-0 rounded-xl pointer-events-none">
                   <div
                     id="sensetivity_zone"
                     style={getZoneStyles()}
@@ -823,16 +823,16 @@ function App() {
                       </p>
                     </div>
 
-                    {!showAddGestureForm ? (
+{/*                     {!showAddGestureForm ? ( */}
 
-                        <div className="flex items-center">
-                          <p className="text-[1.5vmax] font-bold text-black">FPS:</p>
-                          <p className="text-[1.5vmax] font-bold text-black ml-2">
-                            {fps}
-                          </p>
-                        </div>
+{/*                         <div className="flex items-center"> */}
+{/*                           <p className="text-[1.5vmax] font-bold text-black">FPS:</p> */}
+{/*                           <p className="text-[1.5vmax] font-bold text-black ml-2"> */}
+{/*                             {fps} */}
+{/*                           </p> */}
+{/*                         </div> */}
 
-                    ) : null}
+{/*                     ) : null} */}
 
 
                   </div>
@@ -902,7 +902,7 @@ function App() {
                             id="sensetivity_zone_size"
                             type="range"
                             min="0"
-                            max="100"
+                            max="95"
                             value={trackingSize}
                             onChange={(e) => handleTrackingSizeChange(Number(e.target.value))}
                             class="h-full w-full"
@@ -988,7 +988,7 @@ function App() {
                     </div>
                     <div class="px-[3vmax] py-[0.5vmax]">
                         <div class="h-[4vmax] flex items-center justify-between gap-[2vmax]">
-                          <p class="text-[1.3vmax] ">ЗАДЕРЖКА СРАБАТЫВАНИЯ ЖЕСТОВ</p>
+                          <p class="text-[1.3vmax] ">ДЛИТЕЛЬНОСТЬ УДЕРЖАНИЯ ЖЕСТА</p>
                           <p class="text-[1.5vmax] text-[rgb(6,207,249)] font-bold whitespace-nowrap">{activationDelay} сек.</p>
                         </div>
                         <div class="h-[4vmax] flex items-center">
